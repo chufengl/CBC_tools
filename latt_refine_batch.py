@@ -43,6 +43,9 @@ def latt_frame_refine(ind1,res_file):
     k_out_osy=res_arry[ind1,6]
     theta,phi,alpha=OR_angs
     OR=CCB_ref.Rot_mat_gen(theta,phi,alpha)@CCB_ref.rot_mat_yaxis(-frame)@OR_mat
+    OR=OR*1e-8
+    k_out_osx=k_out_osx*1e2
+    K_out_osy=k_out_osy*1e2
     x0=tuple(np.concatenate((OR.reshape(-1,),np.array([cam_len,k_out_osx,k_out_osy])),axis=-1))
     args=(frame,)
     #print('Refining OR for frame %d'%(frame))
@@ -66,7 +69,7 @@ def latt_batch_refine(res_file):
         f.write('TG after Lattice refinement: %7.3e \n'%CCB_ref._TG_func6(res.x,frame))
         f.write('res: \n')
         #f.write('%7.3e %7.3e %7.3e %7.3e %7.3e %7.3e\n'%(res.x[0],res.x[1],res.x[2],res.x[3],res.x[4],res.x[5]))
-        f.write('%7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e\n'%(res.x[0],res.x[1],res.x[2],res.x[3],res.x[4],res.x[5],res.x[6],res.x[7],res.x[8],res.x[9],res.x[10],res.x[11]))
+        f.write('%7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e\n'%(res.x[0]*1e8,res.x[1]*1e8,res.x[2]*1e8,res.x[3]*1e8,res.x[4]*1e8,res.x[5]*1e8,res.x[6]*1e8,res.x[7]*1e8,res.x[8]*1e8,res.x[9],res.x[10]*1e-2,res.x[11]*1e-2))
         f.write('------------------------------------\n')
         print('Done!')
     f.close()

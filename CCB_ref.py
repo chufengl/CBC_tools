@@ -671,10 +671,12 @@ def _TG_func6(x,frame):
     wave_len=1e-10*12.40/E_ph
     asx, asy, asz, bsx, bsy, bsz, csx, csy, csz, amp_fact, kosx, kosy = x
 
-    
+
     #frame,  = argv
 
-    OR=np.array([[asx,bsx,csx],[asy,bsy,csy],[asz,bsz,csz]])
+    OR=np.array([[asx,bsx,csx],[asy,bsy,csy],[asz,bsz,csz]])*1e8
+    kosx=kosx*1e-2
+    kosy=kosy*1e-2
     kout_dir_dict=CCB_read.kout_read('/home/lichufen/CCB_ind/k_out.txt')#changed for batch mode
     kout_dir_dict=CCB_read.kout_dir_adj(kout_dir_dict,amp_fact,kosx,kosy)
 
