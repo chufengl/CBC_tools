@@ -58,7 +58,7 @@ def latt_batch_refine(res_file):
     print('res_file: %s'%(os.path.abspath(res_file)))
     print('%d frames loaded in the res_file'%(res_arry.shape[0]))
     for ind1 in range(res_arry.shape[0]):
-        frame=res_arry[ind1,0]
+        frame=int(res_arry[ind1,0])
         print('Lattice Refining frame %03d'%(frame))
         res=latt_frame_refine(ind1,res_file)
         f.write('frame %03d \n'%(frame))
