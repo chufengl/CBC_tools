@@ -621,7 +621,7 @@ def _TG_func5(x,frame):
     E_ph=17
     wave_len=1e-10*12.40/E_ph
     theta, phi, alpha, amp_fact, kosx, kosy, a, b, c, Alpha, Beta, Gamma =x
-    
+
     Rot_mat=Rot_mat_gen(theta,phi,alpha)
     #frame,  = argv
     lp=np.array([a*1e-10,b*1e-10,c*1e-10,Alpha,Beta,Gamma])
@@ -666,3 +666,52 @@ def _TG_func5(x,frame):
     TG_norm=np.sqrt(TG/num_q)
     return TG_norm
 
+def _TG_func6(x,frame):
+    E_ph=17
+    wave_len=1e-10*12.40/E_ph
+    asx, asy, asz, bsx, bsy, bsz, csx, csy, csz, amp_fact, kosx, kosy = x
+
+    Rot_mat=Rot_mat_gen(theta,phi,alpha)
+    #frame,  = argv
+
+    OR=np.array([[asx,bsx,csx],[asy,bsy,csy],[asz,bsz,csz]])
+    kout_dir_dict=CCB_read.kout_read('/home/lichufen/CCB_ind/k_out.txt')#changed for batch mode
+    kout_dir_dict=CCB_read.kout_dir_adj(kout_dir_dict,amp_fact,kosx,kosy)
+
+    kout_dict,q_dict=CCB_read.get_kout_allframe(kout_dir_dict,E_ph)
+    Q_arry=q_dict['q_'+str(frame)]
+    K_out=kout_dict['kout_'+str(frame)]
+    #HKL_frac, HKL_int, Q_int, Q_resid = get_HKL(OR,Q_arry,np.array([0,0,0]))
+    HKL_frac, HKL_int, Q_int, Q_resid = get_HKL8(OR,Q_arry,np.array([0,0,0]))
+    Delta_k, Dist, Dist_1=exctn_error8_nr(OR,Q_arry,Q_int,np.array([0,0,0]),E_ph)
+    ind=np.argsort(Dist,axis=1)
+
+    ind=np.array([ind[m,0] for m in range(ind.shape[0])])
+    Dist=np.array([Dist[m,ind[m]] for m in range(Dist.shape[0])])
+    HKL_int=np.array([HKL_int[m,:,ind[m]] for m in range(HKL_int.shape[0])])
+    Delta_k=np.array([Delta_k[m,:,ind[m]] for m in range(Delta_k.shape[0])])
+
+
+
+    K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_int)
+    valid_value=(K_in_pred[:,0]<6e8)*(K_in_pred[:,0]>-6e8)*(K_in_pred[:,1]<6e8)*(K_in_pred[:,1]>-6e8)
+    K_in_pred=K_in_pred[valid_value,:]
+    K_out_pred=K_out_pred[valid_value,:]
+    K_out=K_out[valid_value,:]
+    #print(K_out_pred.shape)
+    ###############CHECK THE CODES
+    Delta_k_in_new=K_in_pred-np.array([0,0,1/wave_len]).reshape(1,3)
+    Delta_k_out_new=K_out_pred-K_out
+
+    ind_filter_1=np.linalg.norm(Delta_k_out_new,axis=1)<10e8
+    ind_filter_2=np.linalg.norm(Delta_k_in_new,axis=1)<10e8
+    ind_filter=ind_filter_1*ind_filter_2
+    Delta_k_in_new=Delta_k_in_new[ind_filter,:]
+    Delta_k_out_new=Delta_k_out_new[ind_filter,:]
+    K_out=K_out[ind_filter,:]
+    K_out_pred=K_out_pred[ind_filter,:]
+
+    TG=(np.linalg.norm(Delta_k_out_new,axis=1)**2).sum()
+    num_q=Delta_k_out_new.shape[0]
+    TG_norm=np.sqrt(TG/num_q)
+    return TG_norm

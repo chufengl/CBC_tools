@@ -133,12 +133,12 @@ def point_match(frame,OR,amp_fact,kosx,kosy,E_ph):
 def GA_refine(frame,bounds):
     args=(frame,)
     #bounds=((0,90),(-180,180),(-6,6),(0.95,1.05),(-5e-2,5e-2),(-5e-2,5e-2),(-0.1,0.1),(-0.1,0.1),(-0.1,0.1),(-3,3),(-3,3),(-3,3))
-    # res = scipy.optimize.differential_evolution(CCB_ref._TG_func3,bounds,args=args,strategy='best1bin',disp=True,polish=True)
-    res = scipy.optimize.differential_evolution(CCB_ref._TG_func5,bounds,args=args,strategy='best1bin',disp=True,polish=True,popsize=8,recombination=0.95)
-    # print('intial','TG: %7.3e'%CCB_ref._TG_func3(np.array([0,0,0,1,0,0]),frame))
-    # print('final',res.x,'TG: %7.3e'%CCB_ref._TG_func3(res.x,frame))
-    print('intial','TG: %7.3e'%CCB_ref._TG_func5(np.array([0,0,0,1,0,0,a,b,c,Alpha,Beta,Gamma]),frame))
-    print('final',res.x,'TG: %7.3e'%CCB_ref._TG_func5(res.x,frame))
+    res = scipy.optimize.differential_evolution(CCB_ref._TG_func3,bounds,args=args,strategy='best1bin',disp=True,polish=True)
+    #res = scipy.optimize.differential_evolution(CCB_ref._TG_func5,bounds,args=args,strategy='best1bin',disp=True,polish=True)
+    print('intial','TG: %7.3e'%CCB_ref._TG_func3(np.array([0,0,0,1,0,0]),frame))
+    print('final',res.x,'TG: %7.3e'%CCB_ref._TG_func3(res.x,frame))
+    #print('intial','TG: %7.3e'%CCB_ref._TG_func5(np.array([0,0,0,1,0,0,a,b,c,Alpha,Beta,Gamma]),frame))
+    #print('final',res.x,'TG: %7.3e'%CCB_ref._TG_func5(res.x,frame))
     return res
 
 def frame_refine(frame,res_cut=1,E_ph=17):
@@ -171,7 +171,7 @@ def frame_refine(frame,res_cut=1,E_ph=17):
     plt.axis('equal')
     plt.savefig('line_match_before_frame%03d.png'%(frame))
 
-    bounds=((0,90),(-180,180),(-5,5),(0.95,1.05),(4.95e-2,5.1e-2),(0e-2,2e-2),(0.98*a,1.02*a),(0.98*b,1.02*b),(0.98*c,1.02*c),(Alpha-2,Alpha+2),(Beta-2,Beta+2),(Gamma-2,Gamma+2))
+    bounds=((0,90),(-180,180),(-5,5),(0.95,1.05),(4.95e-2,5.1e-2),(0e-2,2e-2))
     res=GA_refine(frame,bounds)
     #f.write('frame %03d \n'%(frame))
     #f.write('intial','TG: %7.3e'%CCB_ref._TG_func3(np.array([0,0,0,1,0,0]),frame))
@@ -179,11 +179,11 @@ def frame_refine(frame,res_cut=1,E_ph=17):
     #f.write('------------------------------------\n')
     amp_fact=res.x[3]
     kosx,kosy=res.x[4],res.x[5]
-    lp=np.array([1e-10*res.x[6],1e-10*res.x[7],1e-10*res.x[8],res.x[9],res.x[10],res.x[11]])
-    _,OR_mat=xu.A_gen(lp)
-    OR_start=CCB_ref.rot_mat_xaxis(0)@CCB_ref.rot_mat_yaxis(-frame)@CCB_ref.rot_mat_zaxis(11.84)@OR_mat
-    OR=CCB_ref.Rot_mat_gen(res.x[0],res.x[1],res.x[2])@OR_start
-    #OR=CCB_ref.Rot_mat_gen(res.x[0],res.x[1],res.x[2])@CCB_ref.rot_mat_yaxis(-frame)@OR_mat
+    #lp=np.array([1e-10*res.x[6],1e-10*res.x[7],1e-10*res.x[8],res.x[9],res.x[10],res.x[11]])
+    #_,OR_mat=xu.A_gen(lp)
+    #OR_start=CCB_ref.rot_mat_xaxis(0)@CCB_ref.rot_mat_yaxis(-frame)@CCB_ref.rot_mat_zaxis(11.84)@OR_mat
+    #OR=CCB_ref.Rot_mat_gen(res.x[0],res.x[1],res.x[2])@OR_start
+    OR=CCB_ref.Rot_mat_gen(res.x[0],res.x[1],res.x[2])@CCB_ref.rot_mat_yaxis(-frame)@OR_mat
     K_out, K_in_pred, K_out_pred=point_match(frame,OR,amp_fact,kosx,kosy,E_ph)
     HKL_table, K_in_table, K_out_table=CCB_pat_sim.pat_sim_q(OR,res_cut)
     K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_table[:,0:3])
@@ -219,8 +219,8 @@ def batch_refine(start_frame,end_frame):
         f.write('intial TG: %7.3e \n'%CCB_ref._TG_func3(np.array([0,0,0,1,0,0]),frame))
         f.write('final TG: %7.3e \n'%CCB_ref._TG_func3(res.x,frame))
         f.write('res: \n')
-       # f.write('%7.3e %7.3e %7.3e %7.3e %7.3e %7.3e\n'%(res.x[0],res.x[1],res.x[2],res.x[3],res.x[4],res.x[5]))
-        f.write('%7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e\n'%(res.x[0],res.x[1],res.x[2],res.x[3],res.x[4],res.x[5],res.x[6],res.x[7],res.x[8],res.x[9],res.x[10],res.x[11])) 
+        f.write('%7.3e %7.3e %7.3e %7.3e %7.3e %7.3e\n'%(res.x[0],res.x[1],res.x[2],res.x[3],res.x[4],res.x[5]))
+        #f.write('%7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e\n'%(res.x[0],res.x[1],res.x[2],res.x[3],res.x[4],res.x[5],res.x[6],res.x[7],res.x[8],res.x[9],res.x[10],res.x[11]))
         f.write('------------------------------------\n')
     f.close()
     return
