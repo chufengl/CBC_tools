@@ -671,7 +671,7 @@ def _TG_func6(x,frame):
     wave_len=1e-10*12.40/E_ph
     asx, asy, asz, bsx, bsy, bsz, csx, csy, csz, amp_fact, kosx, kosy = x
 
-    Rot_mat=Rot_mat_gen(theta,phi,alpha)
+    
     #frame,  = argv
 
     OR=np.array([[asx,bsx,csx],[asy,bsy,csy],[asz,bsz,csz]])
