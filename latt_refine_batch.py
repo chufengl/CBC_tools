@@ -43,7 +43,7 @@ def latt_frame_refine(ind1,res_file):
     k_out_osy=res_arry[ind1,6]
     theta,phi,alpha=OR_angs
     OR=CCB_ref.Rot_mat_gen(theta,phi,alpha)@CCB_ref.rot_mat_yaxis(-frame)@OR_mat
-    x0=tuple(OR.reshape(-1,))
+    x0=tuple(np.concatenate((OR.reshape(-1,),np.array([cam_len,k_out_osx,k_out_osy])),axis=-1))
     args=(frame,)
     #print('Refining OR for frame %d'%(frame))
     res = scipy.optimize.minimize(CCB_ref._TG_func6, x0, args=args,method='CG', options={'disp': True})
