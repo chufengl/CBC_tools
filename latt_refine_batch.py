@@ -36,7 +36,7 @@ k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
 
 def latt_frame_refine(ind1,res_file):
     res_arry=gm.read_res(res_file)
-    frame=res_arry[ind1,0]
+    frame=int(res_arry[ind1,0])
     OR_angs=tuple(res_arry[ind1,1:4])
     cam_len=res_arry[ind1,4]
     k_out_osx=res_arry[ind1,5]
@@ -46,7 +46,7 @@ def latt_frame_refine(ind1,res_file):
     x0=tuple(np.concatenate((OR.reshape(-1,),np.array([cam_len,k_out_osx,k_out_osy])),axis=-1))
     args=(frame,)
     #print('Refining OR for frame %d'%(frame))
-    res = scipy.optimize.minimize(CCB_ref._TG_func6, x0, args=args,method='CG', options={'disp': True})
+    res = scipy.optimize.minimize(CCB_ref._TG_func6, x0, args=args, method='CG', options={'disp': True})
     return res
 
 
