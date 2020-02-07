@@ -47,7 +47,8 @@ def latt_frame_refine(ind1,res_file):
     k_out_osx=k_out_osx*1e2
     K_out_osy=k_out_osy*1e2
     x0=tuple(np.concatenate((OR.reshape(-1,),np.array([cam_len,k_out_osx,k_out_osy])),axis=-1))
-    args=(frame,)
+    x0_GA=tuple(res_arry[ind1,1:7])
+    args=(frame,x0_GA)
     #print('Refining OR for frame %d'%(frame))
     res = scipy.optimize.minimize(CCB_ref._TG_func6, x0, args=args, method='CG', options={'disp': True})
     return res
@@ -66,7 +67,7 @@ def latt_batch_refine(res_file):
         res=latt_frame_refine(ind1,res_file)
         f.write('frame %03d \n'%(frame))
         f.write('TG before Lattice refinement: %7.3e \n'%(res_arry[ind1,-1]))
-        f.write('TG after Lattice refinement: %7.3e \n'%CCB_ref._TG_func6(res.x,frame))
+        f.write('TG after Lattice refinement: %7.3e \n'%(res.fun))
         f.write('res: \n')
         #f.write('%7.3e %7.3e %7.3e %7.3e %7.3e %7.3e\n'%(res.x[0],res.x[1],res.x[2],res.x[3],res.x[4],res.x[5]))
         f.write('%7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e %7.3e\n'%(res.x[0]*1e8,res.x[1]*1e8,res.x[2]*1e8,res.x[3]*1e8,res.x[4]*1e8,res.x[5]*1e8,res.x[6]*1e8,res.x[7]*1e8,res.x[8]*1e8,res.x[9],res.x[10]*1e-2,res.x[11]*1e-2))

@@ -666,26 +666,31 @@ def _TG_func5(x,frame):
     TG_norm=np.sqrt(TG/num_q)
     return TG_norm
 
-def _TG_func6(x,frame):
+def _TG_func6(x,frame,x0_GA):
     E_ph=17
     wave_len=1e-10*12.40/E_ph
     asx, asy, asz, bsx, bsy, bsz, csx, csy, csz, amp_fact, kosx, kosy = x
 
+    theta, phi, alpha = x0_GA[0:3]
+    amp_fact_0,kosx_0,kosy_0 = x0_GA[3:6]
 
-    #frame,  = argv
+    Rot_mat=Rot_mat_gen(theta,phi,alpha)
+    OR_start=rot_mat_zaxis(0)@rot_mat_xaxis(0)@rot_mat_yaxis(-frame)@OR_mat
+    OR0=Rot_mat@OR_start
 
     OR=np.array([[asx,bsx,csx],[asy,bsy,csy],[asz,bsz,csz]])*1e8
     kosx=kosx*1e-2
     kosy=kosy*1e-2
+
     kout_dir_dict=CCB_read.kout_read('/home/lichufen/CCB_ind/k_out.txt')#changed for batch mode
-    kout_dir_dict=CCB_read.kout_dir_adj(kout_dir_dict,amp_fact,kosx,kosy)
+    kout_dir_dict=CCB_read.kout_dir_adj(kout_dir_dict,amp_fact_0,kosx_0,kosy_0)
 
     kout_dict,q_dict=CCB_read.get_kout_allframe(kout_dir_dict,E_ph)
     Q_arry=q_dict['q_'+str(frame)]
     K_out=kout_dict['kout_'+str(frame)]
     #HKL_frac, HKL_int, Q_int, Q_resid = get_HKL(OR,Q_arry,np.array([0,0,0]))
-    HKL_frac, HKL_int, Q_int, Q_resid = get_HKL8(OR,Q_arry,np.array([0,0,0]))
-    Delta_k, Dist, Dist_1=exctn_error8_nr(OR,Q_arry,Q_int,np.array([0,0,0]),E_ph)
+    HKL_frac, HKL_int, Q_int, Q_resid = get_HKL8(OR0,Q_arry,np.array([0,0,0]))
+    Delta_k, Dist, Dist_1=exctn_error8_nr(OR0,Q_arry,Q_int,np.array([0,0,0]),E_ph)
     ind=np.argsort(Dist,axis=1)
 
     ind=np.array([ind[m,0] for m in range(ind.shape[0])])
@@ -694,6 +699,11 @@ def _TG_func6(x,frame):
     Delta_k=np.array([Delta_k[m,:,ind[m]] for m in range(Delta_k.shape[0])])
 
 
+    kout_dir_dict=CCB_read.kout_read('/home/lichufen/CCB_ind/k_out.txt')#changed for batch mode
+    kout_dir_dict=CCB_read.kout_dir_adj(kout_dir_dict,amp_fact,kosx,kosy)
+    kout_dict,q_dict=CCB_read.get_kout_allframe(kout_dir_dict,E_ph)
+    Q_arry=q_dict['q_'+str(frame)]
+    K_out=kout_dict['kout_'+str(frame)]
 
     K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_int)
     valid_value=(K_in_pred[:,0]<6e8)*(K_in_pred[:,0]>-6e8)*(K_in_pred[:,1]<6e8)*(K_in_pred[:,1]>-6e8)
