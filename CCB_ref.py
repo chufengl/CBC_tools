@@ -692,12 +692,13 @@ def _TG_func6(x,frame,x0_GA):
     HKL_frac, HKL_int, Q_int, Q_resid = get_HKL8(OR0,Q_arry,np.array([0,0,0]))
     Delta_k, Dist, Dist_1=exctn_error8_nr(OR0,Q_arry,Q_int,np.array([0,0,0]),E_ph)
     ind=np.argsort(Dist,axis=1)
-
+    #print(OR0.reshape(-1,))
     ind=np.array([ind[m,0] for m in range(ind.shape[0])])
     Dist=np.array([Dist[m,ind[m]] for m in range(Dist.shape[0])])
     HKL_int=np.array([HKL_int[m,:,ind[m]] for m in range(HKL_int.shape[0])])
     Delta_k=np.array([Delta_k[m,:,ind[m]] for m in range(Delta_k.shape[0])])
-
+    #print(HKL_int.shape)
+    #print(HKL_int[:10,:])
 
     kout_dir_dict=CCB_read.kout_read('/home/lichufen/CCB_ind/k_out.txt')#changed for batch mode
     kout_dir_dict=CCB_read.kout_dir_adj(kout_dir_dict,amp_fact,kosx,kosy)
@@ -706,6 +707,9 @@ def _TG_func6(x,frame,x0_GA):
     K_out=kout_dict['kout_'+str(frame)]
 
     K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_int)
+    #print(K_out_pred.shape)
+    #print(K_out.shape)
+    #print(OR.reshape(-1,))
     valid_value=(K_in_pred[:,0]<6e8)*(K_in_pred[:,0]>-6e8)*(K_in_pred[:,1]<6e8)*(K_in_pred[:,1]>-6e8)
     K_in_pred=K_in_pred[valid_value,:]
     K_out_pred=K_out_pred[valid_value,:]
@@ -714,9 +718,10 @@ def _TG_func6(x,frame,x0_GA):
     ###############CHECK THE CODES
     Delta_k_in_new=K_in_pred-np.array([0,0,1/wave_len]).reshape(1,3)
     Delta_k_out_new=K_out_pred-K_out
-
-    ind_filter_1=np.linalg.norm(Delta_k_out_new,axis=1)<10e8
-    ind_filter_2=np.linalg.norm(Delta_k_in_new,axis=1)<10e8
+    #print(K_out_pred.shape)
+    #print(K_out.shape)
+    ind_filter_1=np.linalg.norm(Delta_k_out_new,axis=1)<10e10
+    ind_filter_2=np.linalg.norm(Delta_k_in_new,axis=1)<10e10
     ind_filter=ind_filter_1*ind_filter_2
     Delta_k_in_new=Delta_k_in_new[ind_filter,:]
     Delta_k_out_new=Delta_k_out_new[ind_filter,:]
@@ -725,5 +730,7 @@ def _TG_func6(x,frame,x0_GA):
 
     TG=(np.linalg.norm(Delta_k_out_new,axis=1)**2).sum()
     num_q=Delta_k_out_new.shape[0]
+    #print(num_q)
     TG_norm=np.sqrt(TG/num_q)
+    print(TG_norm)
     return TG_norm

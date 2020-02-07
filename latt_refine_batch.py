@@ -46,11 +46,36 @@ def latt_frame_refine(ind1,res_file):
     OR=OR*1e-8
     k_out_osx=k_out_osx*1e2
     K_out_osy=k_out_osy*1e2
-    x0=tuple(np.concatenate((OR.reshape(-1,),np.array([cam_len,k_out_osx,k_out_osy])),axis=-1))
+    x0=tuple(np.concatenate(((OR.T).reshape(-1,),np.array([cam_len,k_out_osx,k_out_osy])),axis=-1))
     x0_GA=tuple(res_arry[ind1,1:7])
     args=(frame,x0_GA)
     #print('Refining OR for frame %d'%(frame))
-    res = scipy.optimize.minimize(CCB_ref._TG_func6, x0, args=args, method='CG', options={'disp': True})
+    res = scipy.optimize.minimize(CCB_ref._TG_func6, x0, args=args, method='CG', options={'disp': True,'maxiter':50},tol=5e7)
+    print(res.x)
+    amp_fact=res.x[9]
+    kosx,kosy=res.x[10]*1e-2,res.x[11]*1e-2
+    #lp=np.array([1e-10*res.x[6],1e-10*res.x[7],1e-10*res.x[8],res.x[9],res.x[10],res.x[11]])
+    #_,OR_mat=xu.A_gen(lp)
+    #OR_start=CCB_ref.rot_mat_xaxis(0)@CCB_ref.rot_mat_yaxis(-frame)@CCB_ref.rot_mat_zaxis(11.84)@OR_mat
+    #OR=CCB_ref.Rot_mat_gen(res.x[0],res.x[1],res.x[2])@OR_start
+    OR=(np.array(res.x[0:9]).reshape(3,3)).T*1e8
+    K_out, K_in_pred, K_out_pred=batch_refine.point_match(frame,OR,amp_fact,kosx,kosy,E_ph)
+    res_cut=1
+    HKL_table, K_in_table, K_out_table=CCB_pat_sim.pat_sim_q(OR,res_cut)
+    K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_table[:,0:3])
+
+
+
+    plt.figure(figsize=(10,10))
+    plt.scatter(K_out_table[:,0],K_out_table[:,1],s=1,marker='x',c='g')
+    plt.scatter(K_out[:,0],K_out[:,1],s=20,marker='x',color='b')
+    plt.scatter(K_out_pred[:,0],K_out_pred[:,1],s=20,marker='x',color='r')
+    plt.scatter(K_out_pred_s[:,0],K_out_pred_s[:,1],s=40,marker='o',edgecolor='black',facecolor='None')
+    plt.axis('equal')
+    plt.savefig('line_match_latt_ref_frame%03d.png'%(frame))
+    plt.close('all')
+
+
     return res
 
 
