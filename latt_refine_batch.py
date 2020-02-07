@@ -54,7 +54,7 @@ def latt_batch_refine(res_file):
     f=open('Latt_refine.txt','a',1)
     f.write('The GA_refine res_file is:\n%s\n'%(os.path.abspath(res_file)))
     f.write('====================================\n')
-    res_arry=read_res(res_file)
+    res_arry=gm.read_res(res_file)
     print('res_file: %s'%(os.path.abspath(res_file)))
     print('%d frames loaded in the res_file'%(res_arry.shape[0]))
     for ind1 in range(res_arry.shape[0]):
