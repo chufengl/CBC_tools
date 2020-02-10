@@ -46,9 +46,10 @@ def read_frame(exp_img_file,frame):
     # plt.clim(0,50)
     return exp_img
 
-def get_Ks(frame,OR_angs):
-    theta,phi,alpha=OR_angs
-    OR=CCB_ref.Rot_mat_gen(theta,phi,alpha)@CCB_ref.rot_mat_yaxis(-frame)@OR_mat
+def get_Ks(frame,OR):
+    
+    #theta,phi,alpha=OR_angs
+    #OR=CCB_ref.Rot_mat_gen(theta,phi,alpha)@CCB_ref.rot_mat_yaxis(-frame)@OR_mat
     res_cut=1.2
     HKL_table, K_in_table, K_out_table=CCB_pat_sim.pat_sim_q(OR,res_cut)
     K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_table[:,0:3])
@@ -80,11 +81,11 @@ def read_res(res_file):
             frame_ind_list.append(ind)
             counter=counter+1
     #print('%d frames found from %s'%(counter,res_file))
-    res_arry=np.zeros((counter,9))
+    res_arry=np.zeros((counter,15))
     for  m,ind in enumerate(frame_ind_list):
         frame=int(re.split(' ',lines[ind])[1])
-        initial_TG=float(re.split(' ',lines[ind+1])[2])
-        final_TG=float(re.split(' ',lines[ind+2])[2])
+        initial_TG=float(re.split(': ',lines[ind+1])[1])
+        final_TG=float(re.split(': ',lines[ind+2])[1])
         res_par=[float(m) for m in re.split('[ \n]',lines[ind+4])[:-1]]
         res_arry[m,0]=frame
         res_arry[m,1:-2]=res_par
@@ -96,13 +97,14 @@ def read_res(res_file):
 def gen_single_match(exp_img_file,res_file,ind1):
     res_arry=read_res(res_file)
     frame=int(res_arry[ind1,0])
-    OR_angs=tuple(res_arry[ind1,1:4])
-    cam_len=res_arry[ind1,4]
-    k_out_osx=res_arry[ind1,5]
-    k_out_osy=res_arry[ind1,6]
+    #OR_angs=tuple(res_arry[ind1,1:4])
+    OR=res_arry[ind1,1:10].reshape(3,3).T
+    cam_len=res_arry[ind1,10]
+    k_out_osx=res_arry[ind1,11]
+    k_out_osy=res_arry[ind1,12]
     exp_img=read_frame(exp_img_file,frame)
 
-    HKL_table, K_in_table, K_out_table, K_in_pred_s,K_out_pred_s = get_Ks(frame,OR_angs)
+    HKL_table, K_in_table, K_out_table, K_in_pred_s,K_out_pred_s = get_Ks(frame,OR)
     XY0=CCB_pat_sim.in_plane_cor(0,1e8,0.1025*cam_len,11,K_in_table,K_out_table)
     XY1=CCB_pat_sim.in_plane_cor(1e-3,2e8,0.1,11,K_in_table,K_out_table)
     XY2=CCB_pat_sim.off_plane_cor(1e-3,2e8,0.1,11,K_in_table,K_out_table)
@@ -125,7 +127,7 @@ def gen_single_match(exp_img_file,res_file,ind1):
     plt.scatter(PXY0[:,0],PXY0[:,1],s=1,marker='x',c='g')
     #plt.scatter(PXY1[:,0],PXY1[:,1],s=1,marker='x',c='b')
     #plt.scatter(PXY2[:,0],PXY2[:,1],s=1,marker='x',c='r')
-    plt.savefig('match_'+'fr'+str(int(frame))+'.png')
+    plt.savefig('match_latt'+'fr'+str(int(frame))+'.png')
     #print('res_file: %s'%(res_file))
     print('frame %d done!\n'%(frame))
     return None
@@ -134,7 +136,7 @@ if __name__=='__main__':
     exp_img_file=os.path.abspath(sys.argv[1])
     res_file=os.path.abspath(sys.argv[2])
     res_arry=read_res(res_file)
-    print('res_file: %s'%(res_file))
+    print('Latt res_file: %s'%(res_file))
     print('%d frames loaded in the res_file'%(res_arry.shape[0]))
     for ind1 in range(res_arry.shape[0]):
         gen_single_match(exp_img_file,res_file,ind1)

@@ -5,6 +5,8 @@ import sys,os
 sys.path.append(os.path.realpath(__file__))
 import h5py
 import numpy as np
+import matplotlib
+matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import scipy
 
@@ -63,7 +65,7 @@ def get_kout_allframe(kout_dir_dict,E_ph):
         #print('processing'+ll)
         kout_dir=kout_dir_dict[ll]
         kout=get_kout(kout_dir,E_ph)
-        q=kout-np.array([0,0,1e10/(12.04/E_ph)]).reshape(1,3)
+        q=kout-np.array([0,0,1e10/(12.40/E_ph)]).reshape(1,3)
         kout_dict['kout_'+str(lll)]=kout
         q_dict['q_'+str(lll)]=q
     return kout_dict,q_dict

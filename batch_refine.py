@@ -6,7 +6,8 @@ sys.path.append(os.path.realpath(__file__))
 import numpy as np
 import matplotlib
 import h5py
-import matplotlib.pyplot as plot
+matplotlib.use('pdf')
+import matplotlib.pyplot as plt
 import Xtal_calc_util as xu
 import CCB_ref
 import CCB_pred
@@ -171,7 +172,7 @@ def frame_refine(frame,res_cut=1,E_ph=17):
     plt.axis('equal')
     plt.savefig('line_match_before_frame%03d.png'%(frame))
 
-    bounds=((0,90),(-180,180),(-5,5),(0.95,1.05),(4.95e-2,5.1e-2),(0e-2,2e-2))
+    bounds=((0,90),(-180,180),(-5,5),(0.95,1.05),(4.0e-2,5.8e-2),(0e-2,2e-2))
     res=GA_refine(frame,bounds)
     #f.write('frame %03d \n'%(frame))
     #f.write('intial','TG: %7.3e'%CCB_ref._TG_func3(np.array([0,0,0,1,0,0]),frame))

@@ -4,8 +4,9 @@ CCB_pat_sim.py simulates the diffraction pattern from a CCB condition.
 
 import sys,os
 import numpy as np
-import matplotlib
 import h5py
+import matplotlib
+matplotlib.use('pdf')
 import matplotlib.pyplot as plot
 import Xtal_calc_util as xu
 import CCB_ref

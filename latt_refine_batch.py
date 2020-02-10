@@ -5,14 +5,14 @@ after the DE refinement.
 import sys,os
 sys.path.append(os.path.realpath(__file__))
 import numpy as np
-import matplotlib
 import h5py
-import matplotlib.pyplot as plot
 import Xtal_calc_util as xu
 import CCB_ref
 import CCB_pred
 import CCB_read
 import CCB_pat_sim
+import matplotlib
+matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import scipy.optimize
 import batch_refine
@@ -50,7 +50,8 @@ def latt_frame_refine(ind1,res_file):
     x0_GA=tuple(res_arry[ind1,1:7])
     args=(frame,x0_GA)
     #print('Refining OR for frame %d'%(frame))
-    res = scipy.optimize.minimize(CCB_ref._TG_func6, x0, args=args, method='CG', options={'disp': True,'maxiter':50},tol=5e7)
+    bounds=((x0[0]-0.2,x0[0]+0.2),(x0[1]-0.2,x0[1]+0.2),(x0[2]-0.2,x0[2]+0.2),(x0[3]-0.2,x0[3]+0.2),(x0[4]-0.2,x0[4]+0.2),(x0[5]-0.2,x0[5]+0.2),(x0[6]-0.2,x0[6]+0.2),(x0[7]-0.2,x0[7]+0.2),(x0[8]-0.2,x0[8]+0.2),(x0[9]-0.03,x0[9]+0.03),(x0[10]-0.3,x0[10]+0.3),(x0[11]-0.3,x0[11]+0.3))
+    res = scipy.optimize.minimize(CCB_ref._TG_func6, x0, args=args, bounds=bounds,method=None, options={'disp': True,'maxiter':2000})
     print(res.x)
     amp_fact=res.x[9]
     kosx,kosy=res.x[10]*1e-2,res.x[11]*1e-2
