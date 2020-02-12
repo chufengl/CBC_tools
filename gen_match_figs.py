@@ -8,7 +8,7 @@ for the CBC data sets.
 import sys,os
 import numpy as np
 import matplotlib
-matplotlib.use('pdf')
+#matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import CCB_ref
 import CCB_pred
