@@ -17,6 +17,7 @@ def read_kout(kout_file,bins):
 	plt.figure();plt.hist2d(K_in[:,0],K_in[:,1],bins=bins,cmap='jet');
 	plt.xlim(-8e8,8e8)
 	plt.ylim(-8e8,8e8)
+	plt.clim(0,50)
 	plt.colorbar();
 	#plt.show()
 	plt.savefig(os.path.basename(kout_file).split('.')[0]+'.png')

@@ -2,14 +2,15 @@ import sys,os
 sys.path.append(os.path.realpath(__file__))
 import h5py
 import numpy as np
-import matplotlib
-matplotlib.use('pdf')
-import matplotlib.pyplot as plt
 import scipy
 import CCB_read
 import CCB_pred
 import CCB_pat_sim
 import Xtal_calc_util as xu
+import matplotlib
+#matplotlib.use('pdf')
+import matplotlib.pyplot as plot
+
 a=15.4029218
 b=21.86892773
 c=25
@@ -685,14 +686,16 @@ def _TG_func6(x,frame,x0_GA):
     kosy=kosy*1e-2
 
     kout_dir_dict=CCB_read.kout_read('/home/lichufen/CCB_ind/k_out.txt')#changed for batch mode
-    kout_dir_dict=CCB_read.kout_dir_adj(kout_dir_dict,amp_fact_0,kosx_0,kosy_0)
+    #kout_dir_dict=CCB_read.kout_dir_adj(kout_dir_dict,amp_fact_0,kosx_0,kosy_0)
+    kout_dir_dict=CCB_read.kout_dir_adj(kout_dir_dict,amp_fact,kosx,kosy)
 
     kout_dict,q_dict=CCB_read.get_kout_allframe(kout_dir_dict,E_ph)
     Q_arry=q_dict['q_'+str(frame)]
     K_out=kout_dict['kout_'+str(frame)]
-    #HKL_frac, HKL_int, Q_int, Q_resid = get_HKL(OR,Q_arry,np.array([0,0,0]))
-    HKL_frac, HKL_int, Q_int, Q_resid = get_HKL8(OR0,Q_arry,np.array([0,0,0]))
-    Delta_k, Dist, Dist_1=exctn_error8_nr(OR0,Q_arry,Q_int,np.array([0,0,0]),E_ph)
+    HKL_frac, HKL_int, Q_int, Q_resid = get_HKL8(OR,Q_arry,np.array([0,0,0]))
+    #HKL_frac, HKL_int, Q_int, Q_resid = get_HKL8(OR0,Q_arry,np.array([0,0,0])) # This is to fix the HKL which is determined from OR0.
+    Delta_k, Dist, Dist_1=exctn_error8_nr(OR,Q_arry,Q_int,np.array([0,0,0]),E_ph)
+    #Delta_k, Dist, Dist_1=exctn_error8_nr(OR0,Q_arry,Q_int,np.array([0,0,0]),E_ph)  # this is for fixed HKL.
     ind=np.argsort(Dist,axis=1)
     #print(OR0.reshape(-1,))
     ind=np.array([ind[m,0] for m in range(ind.shape[0])])

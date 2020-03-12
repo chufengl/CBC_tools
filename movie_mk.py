@@ -11,7 +11,7 @@ import glob2
 def get_frame(file_name):
 	frame=file_name.split('fr')[1].split('.')[0] 
 	return int(frame) 
-def mk_movie(file_name_pattern):
+def mk_movie(file_name_pattern,out_name):
 	img_list=[]
 
 	file_name_list=glob2.glob(file_name_pattern)
@@ -28,7 +28,7 @@ def mk_movie(file_name_pattern):
 		size = (width,height)
 		img_list.append(img)
 
-	out = cv2.VideoWriter('K_map.mp4',cv2.VideoWriter_fourcc(*'DIVX'), 6, size)
+	out = cv2.VideoWriter(out_name+'.mp4',cv2.VideoWriter_fourcc(*'DIVX'), 6, size)
 	for i in range(len(img_list)):
 		out.write(img_list[i])
 		print('frame %d witten!'%(i))
@@ -38,6 +38,7 @@ def mk_movie(file_name_pattern):
 if __name__=='__main__':
 
 	file_name_pattern=os.path.abspath(sys.argv[1])
-	mk_movie(file_name_pattern)
+	out_name=sys.argv[2]
+	mk_movie(file_name_pattern,out_name)
 
 	

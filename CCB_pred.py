@@ -7,10 +7,10 @@ import sys,os
 sys.path.append(os.path.realpath(__file__))
 import h5py
 import numpy as np
-import matplotlib
-matplotlib.use('pdf')
-import matplotlib.pyplot as plt
 import scipy
+import matplotlib
+#matplotlib.use('pdf')
+import matplotlib.pyplot as plot
 
 def kout_pred(OR_mat,k_in_cen,HKL_int):
     #NA. is the numeriacal aperture, now a single value salar, in radians.

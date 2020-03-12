@@ -6,7 +6,7 @@ sys.path.append(os.path.realpath(__file__))
 import h5py
 import numpy as np
 import matplotlib
-matplotlib.use('pdf')
+#matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import scipy
 

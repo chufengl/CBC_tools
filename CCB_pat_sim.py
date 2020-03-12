@@ -5,13 +5,13 @@ CCB_pat_sim.py simulates the diffraction pattern from a CCB condition.
 import sys,os
 import numpy as np
 import h5py
-import matplotlib
-matplotlib.use('pdf')
-import matplotlib.pyplot as plot
 import Xtal_calc_util as xu
 import CCB_ref
 import CCB_pred
 import matplotlib.pyplot as plt
+import matplotlib
+#matplotlib.use('pdf')
+import matplotlib.pyplot as plot
 
 E_ph=17
 wave_len= 1e-10*12.40/E_ph
@@ -55,10 +55,14 @@ def get_kins(q,k_in_cen):
 def pupil_func(k_in):
     k_in_x=k_in[0]
     k_in_y=k_in[1]
-    valid_value=(k_in_x<1.5e8)*(k_in_x>-1.5e8)*(k_in_y<2.5e8)*(k_in_y>-2.5e8)
+    k_in_x=k_in_x - (-0e8)
+    k_in_y=k_in_y - (-0e8)
+    valid_value=(k_in_x<8e8)*(k_in_x>-8e8)*(k_in_y<8e8)*(k_in_y>-8e8)
+    #valid_value=(k_in_x<0e8)*(k_in_x>-5e8)*(k_in_y<0e8)*(k_in_y>-5e8)
+    #valid_value=(k_in_x<2e8)*(k_in_x>-2e8)*(k_in_y<2e8)*(k_in_y>-2e8)
     return valid_value
 
-def source_line_scan(k_in_cen,OR,HKL,rot_ang_step=0.05,rot_ang_range=1.5):
+def source_line_scan(k_in_cen,OR,HKL,rot_ang_step=0.1,rot_ang_range=3.0):
     '''
     source_line_scan
     compute all possible k_in for a centain pupil, from

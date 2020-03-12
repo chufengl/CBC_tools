@@ -50,8 +50,11 @@ def latt_frame_refine(ind1,res_file):
     x0_GA=tuple(res_arry[ind1,1:7])
     args=(frame,x0_GA)
     #print('Refining OR for frame %d'%(frame))
-    bounds=((x0[0]-0.2,x0[0]+0.2),(x0[1]-0.2,x0[1]+0.2),(x0[2]-0.2,x0[2]+0.2),(x0[3]-0.2,x0[3]+0.2),(x0[4]-0.2,x0[4]+0.2),(x0[5]-0.2,x0[5]+0.2),(x0[6]-0.2,x0[6]+0.2),(x0[7]-0.2,x0[7]+0.2),(x0[8]-0.2,x0[8]+0.2),(x0[9]-0.03,x0[9]+0.03),(x0[10]-0.3,x0[10]+0.3),(x0[11]-0.3,x0[11]+0.3))
-    res = scipy.optimize.minimize(CCB_ref._TG_func6, x0, args=args, bounds=bounds,method=None, options={'disp': True,'maxiter':2000})
+    bounds=((x0[0]-0.05,x0[0]+0.05),(x0[1]-0.05,x0[1]+0.05),(x0[2]-0.05,x0[2]+0.05),(x0[3]-0.05,x0[3]+0.05),(x0[4]-0.05,x0[4]+0.05),(x0[5]-0.05,x0[5]+0.05),(x0[6]-0.05,x0[6]+0.05),(x0[7]-0.05,x0[7]+0.05),(x0[8]-0.05,x0[8]+0.05),(x0[9]-0.2,x0[9]+0.2),(x0[10]-0,x0[10]+0),(x0[11]-0,x0[11]+0))
+    #res = scipy.optimize.minimize(CCB_ref._TG_func6, x0, args=args, bounds=bounds,method='L-BFGS-B', options={'disp': True})
+    #res = scipy.optimize.dual_annealing(CCB_ref._TG_func6, bounds, args, x0=x0, maxiter=1000)
+    res = scipy.optimize.differential_evolution(CCB_ref._TG_func6,bounds,args=args,strategy='best1bin',disp=True,polish=True)
+	
     print(res.x)
     amp_fact=res.x[9]
     kosx,kosy=res.x[10]*1e-2,res.x[11]*1e-2
@@ -80,8 +83,8 @@ def latt_frame_refine(ind1,res_file):
     return res
 
 
-def latt_batch_refine(res_file):
-    f=open('Latt_refine.txt','a',1)
+def latt_batch_refine(res_file,out_file):
+    f=open(out_file,'a',1)
     f.write('The GA_refine res_file is:\n%s\n'%(os.path.abspath(res_file)))
     f.write('====================================\n')
     res_arry=gm.read_res(res_file)
@@ -104,4 +107,5 @@ def latt_batch_refine(res_file):
 
 if __name__=='__main__':
     res_file=os.path.abspath(sys.argv[1])
-    latt_batch_refine(res_file)
+    out_file=os.path.abspath(sys.argv[2])
+    latt_batch_refine(res_file,out_file)

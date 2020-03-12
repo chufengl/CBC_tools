@@ -1,5 +1,5 @@
 '''
-'gen_match_figs.py' is to generate the "matching" figures for individual diffraction frames
+'gen_match_figs_LX.py' is to generate the "matching" figures for individual diffraction frames
 for the CBC data sets.
 
 (intially took from the 'CCB_FFT-Copy1.ipynb' file)
@@ -35,7 +35,7 @@ def read_frame(exp_img_file,frame):
     #exp_img_file='/Users/chufeng/Downloads/scan_corrected_00135.h5'
     f=h5py.File(exp_img_file,'r')
     f['/corrected_data/corrected_data'].shape
-    #frame=1
+   #frame=1
     exp_img=np.array(f['/corrected_data/corrected_data'][frame,:,:])
     f.close()
     # plt.figure(figsize=(10,10))
@@ -103,14 +103,14 @@ def gen_single_match(exp_img_file,res_file,ind1):
     exp_img=read_frame(exp_img_file,frame)
 
     HKL_table, K_in_table, K_out_table, K_in_pred_s,K_out_pred_s = get_Ks(frame,OR_angs)
-    XY0=CCB_pat_sim.in_plane_cor(0,1e8,0.1/cam_len,11,K_in_table,K_out_table)
-    XY1=CCB_pat_sim.in_plane_cor(1e-3,2e8,0.1,11,K_in_table,K_out_table)
+    XY0=CCB_pat_sim.in_plane_cor(0,1e8,0.10/cam_len,11,K_in_table,K_out_table)
+    XY1=CCB_pat_sim.in_plane_cor(1.0e-3,3e8,0.10/cam_len,68,K_in_table,K_out_table)
     XY2=CCB_pat_sim.off_plane_cor(1e-3,2e8,0.1,11,K_in_table,K_out_table)
 
 
-    PXY0=CCB_pat_sim.XY2P(XY0,75.0e-6,1540+k_out_osx*0.1/cam_len/(75e-6),1724.4+k_out_osy*0.1/cam_len/(75e-6))
-    PXY1=CCB_pat_sim.XY2P(XY1,73.5e-6,1535,1723)
-    PXY2=CCB_pat_sim.XY2P(XY2,73.5e-6,1535,1723)
+    PXY0=CCB_pat_sim.XY2P(XY0,75.0e-6,1540,1724.4)
+    PXY1=CCB_pat_sim.XY2P(XY1,75e-6,1540+k_out_osx*0.1/cam_len/(75e-6),1724.4+k_out_osy*0.1/cam_len/(75e-6))
+    PXY2=CCB_pat_sim.XY2P(XY2,75e-6,1540,1724.4)
     # ################################
     # The above does not use the k_out_osx,k_out_osy,cam_len.
     #
@@ -119,8 +119,8 @@ def gen_single_match(exp_img_file,res_file,ind1):
 
 	#################################
 	# save the K_in and K_out arrys in .txt file
-    out_txt_file='K_map_sim_fr%d.txt'%(frame)
-    np.savetxt(out_txt_file,np.hstack((K_in_table,K_out_table,PXY0)),fmt='%13.3e %13.3e %13.3e %13.3e %13.3e %13.3e %7.2f %7.2f')
+    out_txt_file='K_map_sim_LX_fr%d.txt'%(frame)
+    np.savetxt(out_txt_file,np.hstack((K_in_table,K_out_table,PXY1)),fmt='%13.3e %13.3e %13.3e %13.3e %13.3e %13.3e %7.2f %7.2f')
 	#################################
     plt.figure(figsize=(10,10))
     plt.imshow(exp_img)
@@ -128,10 +128,10 @@ def gen_single_match(exp_img_file,res_file,ind1):
     plt.xlim(250,2100)
     plt.ylim(500,2300)
     plt.clim(0,50)
-    plt.scatter(PXY0[:,0],PXY0[:,1],s=0.2,marker='x',c='g')
-    #plt.scatter(PXY1[:,0],PXY1[:,1],s=1,marker='x',c='b')
+    #plt.scatter(PXY0[:,0],PXY0[:,1],s=1,marker='x',c='g')
+    plt.scatter(PXY1[:,0],PXY1[:,1],s=0.2,marker='x',c='b')
     #plt.scatter(PXY2[:,0],PXY2[:,1],s=1,marker='x',c='r')
-    plt.savefig('match_'+'fr'+str(int(frame))+'.png')
+    plt.savefig('match_LX'+'fr'+str(int(frame))+'.png')
     #print('res_file: %s'%(res_file))
     print('frame %d done!\n'%(frame))
     return None
