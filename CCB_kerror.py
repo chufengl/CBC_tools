@@ -35,15 +35,27 @@ k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
 
 def get_kerror_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.txt',thld=10,min_pix=20):
 	
-	K_pix_arry_all, HKL_int, Pxy_cen_arry, OR=CCB_kmap.get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.txt',thld=thld,min_pix=min_pix)
-		
+	K_pix_arry_all, HKL_int, Pxy_cen_arry, OR=CCB_kmap.get_K_frame(exp_img_file,frame,res_file=res_file,thld=thld,min_pix=min_pix)
+
+
+	res_arry=gm.read_res(res_file)
+	ind=np.where(res_arry[:,0]==frame)[0][0]
+	frame=res_arry[ind,0]
+	theta=res_arry[ind,1]
+	phi=res_arry[ind,2]
+	alpha=res_arry[ind,3]
+	cam_len=res_arry[ind,4]
+	k_out_osx=res_arry[ind,5]
+	k_out_osy=res_arry[ind,6]
+
+	
 	num_s=HKL_int.shape[0]
 	K_in_cen_pred_arry=np.zeros((num_s,3))
 	K_out_cen_pred_arry=np.zeros((num_s,3))
 	for m in range(num_s):
 		HKL=HKL_int[m,:]
 		#print(HKL)
-		K_in_SL, K_out_SL=CCB_pat_sim.source_line_scan(k_cen,OR,HKL,rot_ang_step=0.05,rot_ang_range=1.5)
+		K_in_SL, K_out_SL=CCB_pat_sim.source_line_scan(k_cen,OR,HKL,rot_ang_step=0.05,rot_ang_range=2.0)
 		if K_in_SL.shape[0]!=0:
 			K_in_cen_pred=0.5*(K_in_SL[0,:]+K_in_SL[-1,:])
 			K_out_cen_pred=0.5*(K_out_SL[0,:]+K_out_SL[-1,:])
@@ -56,8 +68,8 @@ def get_kerror_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA
 			K_out_cen_pred=np.array([0,0,0])
 			K_in_cen_pred_arry[m,:]=K_in_cen_pred
 			K_out_cen_pred_arry[m,:]=K_out_cen_pred	
-	XY_cen_pred_arry=CCB_pat_sim.in_plane_cor(0,1e8,0.1025*1,90,K_in_cen_pred_arry,K_out_cen_pred_arry)
-	PXY_cen_pred_arry=CCB_pat_sim.XY2P(XY_cen_pred_arry,75.0e-6,1540,1724.4)
+	XY_cen_pred_arry=CCB_pat_sim.in_plane_cor(0,1e8,0.10/cam_len,90,K_in_cen_pred_arry,K_out_cen_pred_arry)
+	PXY_cen_pred_arry=CCB_pat_sim.XY2P(XY_cen_pred_arry,75.0e-6,(1540+k_out_osx*0.1/cam_len/(75e-6)),(1724.4+k_out_osy*0.1/cam_len/(75e-6)))
 	kerror_arry=Pxy_cen_arry-PXY_cen_pred_arry
 	ind_filter=(K_out_cen_pred_arry[:,0]==0)*(K_out_cen_pred_arry[:,1]==0)*(K_out_cen_pred_arry[:,2]==0)
 	ind_filter=np.logical_not(ind_filter)
@@ -87,6 +99,6 @@ if __name__=='__main__':
 	thld=int(sys.argv[5])
 	min_pix=int(sys.argv[6])
 	for frame in range(start_frame,end_frame+1):
-		HKL_int, Pxy_cen_arry, K_in_cen_pred_arry,PXY_cen_pred_arry, kerror_arry=get_kerror_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.txt',thld=thld,min_pix=min_pix)
+		HKL_int, Pxy_cen_arry, K_in_cen_pred_arry,PXY_cen_pred_arry, kerror_arry=get_kerror_frame(exp_img_file,frame,res_file=res_file,thld=thld,min_pix=min_pix)
 		kerror_output_frame(frame, HKL_int, Pxy_cen_arry, PXY_cen_pred_arry,kerror_arry)
 		print('frame %d done'%(frame))

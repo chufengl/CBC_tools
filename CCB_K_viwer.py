@@ -19,6 +19,7 @@ def read_kout(kout_file,bins):
 	plt.ylim(-8e8,8e8)
 	plt.clim(0,50)
 	plt.colorbar();
+	plt.title('frame %d'%(int(os.path.basename(kout_file).split('.')[0].split('fr')[1])))
 	#plt.show()
 	plt.savefig(os.path.basename(kout_file).split('.')[0]+'.png')
 	return None

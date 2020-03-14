@@ -57,10 +57,10 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 		ind=ind[0]
 		Py_cen,Px_cen=props[s_ind].centroid
 		Pxy_cen_arry[ind,:]=np.array([Px_cen,Py_cen])
-		x_cen=(Px_cen-1540)*75e-6
-		y_cen=(Py_cen-1724.4)*75e-6
+		x_cen=(Px_cen-(1540+k_out_osx*0.1/cam_len/(75e-6)))*75e-6
+		y_cen=(Py_cen-(1724.4+k_out_osy*0.1/cam_len/(75e-6)))*75e-6
 		#z_cen=0.1025*cam_len
-		z_cen=0.1025*1
+		z_cen=0.10/cam_len
 		k_cen_dir=np.array([x_cen,y_cen,z_cen])/np.linalg.norm(np.array([x_cen,y_cen,z_cen]))
 		k_out_cen=(1/wave_len)*k_cen_dir
 		Q_cen=k_out_cen-k_cen.reshape(-1,)
@@ -99,6 +99,13 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 
 	return K_pix_arry_all, HKL_int, Pxy_cen_arry, OR
 
+
+def HKL_patch():
+	pass
+	return K_in, HKL
+
+
+
 def K_output_frame(K_pix_arry_all):
 
 	#frame=int(K_pix_arry_all[0,0])
@@ -116,7 +123,7 @@ if __name__=='__main__':
 	thld=int(sys.argv[5])
 	min_pix=int(sys.argv[6])
 	for frame in range(start_frame,end_frame+1):
-		K_pix_arry_all, HKL_int, Pxy_cen_arry, OR=get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.txt',thld=thld,min_pix=min_pix)
+		K_pix_arry_all, HKL_int, Pxy_cen_arry, OR=get_K_frame(exp_img_file,frame,res_file=res_file,thld=thld,min_pix=min_pix)
 		K_output_frame(K_pix_arry_all)
 		print('frame %d done'%(frame))
 
