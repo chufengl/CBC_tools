@@ -10,6 +10,15 @@ import matplotlib
 import matplotlib.pyplot as plt
 import scipy
 
+E_ph=17 #in keV
+wave_len=12.40/E_ph #in Angstrom
+wave_len=1e-10*wave_len # convert to m
+#k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=1/wave_len*np.array([-0.03115,-0.02308,0.999248]).reshape(3,1)
+k_cen = np.genfromtxt('/home/lichufen/CCB_ind/k_cen.txt')
+
+
 def get_ind(filename):
     filename=os.path.abspath(filename)
     f=open(filename,'r')
@@ -65,7 +74,8 @@ def get_kout_allframe(kout_dir_dict,E_ph):
         #print('processing'+ll)
         kout_dir=kout_dir_dict[ll]
         kout=get_kout(kout_dir,E_ph)
-        q=kout-np.array([0,0,1e10/(12.40/E_ph)]).reshape(1,3)
+        #q=kout-np.array([0,0,1e10/(12.40/E_ph)]).reshape(1,3)
+        q=kout-k_cen[lll,:].reshape(1,3)
         kout_dict['kout_'+str(lll)]=kout
         q_dict['q_'+str(lll)]=q
     return kout_dict,q_dict

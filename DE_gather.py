@@ -6,7 +6,7 @@ import sys,os
 sys.path.append(os.path.realpath(__file__))
 import numpy as np
 import matplotlib
-matplotlib.use('pdf')
+#matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import CCB_ref
 import CCB_pred

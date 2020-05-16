@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 
-def read_kout_int(kout_file,bins):
+def read_kout_int(kout_file,bins,save_kmap=False):
 	k_exp=np.genfromtxt(kout_file)
 	bins_arry_x=np.linspace(-10e8,10e8,bins+1)
 	bins_arry_y=np.linspace(-10e8,10e8,bins+1)
@@ -17,14 +17,21 @@ def read_kout_int(kout_file,bins):
 	for m in range(k_exp[:,-2].shape[0]):
 		Int_arry[bins_ind_x[m]-1,bins_ind_y[m]-1]+=k_exp[m,3]
 	KX,KY=np.meshgrid(bins_arry_x,bins_arry_y)
-	plt.figure();plt.pcolor(KX,KY,Int_arry,cmap='jet');plt.clim(0,5e2);
+	plt.figure();plt.pcolor(KX,KY,Int_arry.T,cmap='jet');plt.clim(0,5e2);
 	plt.colorbar();
 	plt.title('frame %d'%(int(os.path.basename(kout_file).split('.')[0].split('fr')[1])))
 	#plt.show()
 	plt.savefig('Int_'+os.path.basename(kout_file).split('.')[0]+'.png')
+	if save_kmap==True:
+		np.save('bins_arry_x_fr%d.npy'%(int(os.path.basename(kout_file).split('.')[0].split('fr')[1])),bins_arry_x)
+		np.save('bins_arry_y_fr%d.npy'%(int(os.path.basename(kout_file).split('.')[0].split('fr')[1])),bins_arry_y)
+		np.save('bins_ind_x_fr%d.npy'%(int(os.path.basename(kout_file).split('.')[0].split('fr')[1])),bins_ind_x)
+		np.save('bins_ind_y_fr%d.npy'%(int(os.path.basename(kout_file).split('.')[0].split('fr')[1])),bins_ind_y)
+		np.save('Int_arry_fr%d.npy'%(int(os.path.basename(kout_file).split('.')[0].split('fr')[1])),Int_arry)
 	return None
 if __name__=='__main__':
 	kout_file=os.path.abspath(sys.argv[1])
 	bins=int(sys.argv[2])
-	read_kout_int(kout_file,bins)
+	save_kmap = bool(int(sys.argv[3]))
+	read_kout_int(kout_file,bins,save_kmap=save_kmap)
 	print(kout_file+'Done!')

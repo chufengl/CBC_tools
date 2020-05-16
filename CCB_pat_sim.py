@@ -16,7 +16,11 @@ import matplotlib.pyplot as plot
 E_ph=17
 wave_len= 1e-10*12.40/E_ph
 k0=1/wave_len
-k_in_cen=np.array([0,0,k0]).reshape(3,1)
+#k_in_cen=np.array([0,0,k0]).reshape(3,1)
+#k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=k0*np.array([-0.03115,-0.02308,0.999248]).reshape(3,1)
+k_cen = np.genfromtxt('/home/lichufen/CCB_ind/k_cen.txt')
+k_in_cen=k_cen
 
 OR_mat=np.array([[ 4.47536571e+08,-1.33238725e+08,0.00000000e+00],\
 [9.38439088e+07,6.35408337e+08,0.00000000e+00],\
@@ -57,9 +61,9 @@ def pupil_func(k_in):
     k_in_y=k_in[1]
     k_in_x=k_in_x - (-0e8)
     k_in_y=k_in_y - (-0e8)
-    valid_value=(k_in_x<8e8)*(k_in_x>-8e8)*(k_in_y<8e8)*(k_in_y>-8e8)
+    #valid_value=(k_in_x<8e8)*(k_in_x>-8e8)*(k_in_y<8e8)*(k_in_y>-8e8)
     #valid_value=(k_in_x<0e8)*(k_in_x>-5e8)*(k_in_y<0e8)*(k_in_y>-5e8)
-    #valid_value=(k_in_x<2e8)*(k_in_x>-2e8)*(k_in_y<2e8)*(k_in_y>-2e8)
+    valid_value=(k_in_x<-2e8)*(k_in_x>-6e8)*(k_in_y<-1e8)*(k_in_y>-5e8)
     return valid_value
 
 def source_line_scan(k_in_cen,OR,HKL,rot_ang_step=0.1,rot_ang_range=3.0):
@@ -115,7 +119,7 @@ def gen_HKL_list(res_cut,OR):
     HKL_list=HKL_list[HKL_list[:,-1]>=res_cut]
     return HKL_list
 
-def pat_sim_q(OR,res_cut):
+def pat_sim_q(k_in_cen,OR,res_cut):
     ## Pattern_q_table:
     ## col3,4,5: k_in vect
     K_in_table=np.array([]).reshape(-1,3)

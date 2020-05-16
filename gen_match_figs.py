@@ -14,7 +14,7 @@ import CCB_read
 import h5py
 import re
 import matplotlib
-matplotlib.use('pdf')
+#matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 
 OR_mat=np.array([[ 4.47536571e+08,-1.33238725e+08,0.00000000e+00],\
@@ -26,7 +26,9 @@ E_ph=17 #in keV
 #wave_len=12.40/E_ph #in Angstrom
 wave_len=12.40/E_ph #in Angstrom
 wave_len=1e-10*wave_len # convert to m
-k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=1/wave_len*np.array([-0.03115,-0.02308,0.999248]).reshape(3,1)
+k_cen = np.genfromtxt('/home/lichufen/CCB_ind/k_cen.txt')
 
 
 def read_frame(exp_img_file,frame):
@@ -50,8 +52,9 @@ def get_Ks(frame,OR_angs):
     theta,phi,alpha=OR_angs
     OR=CCB_ref.Rot_mat_gen(theta,phi,alpha)@CCB_ref.rot_mat_yaxis(-frame)@OR_mat
     res_cut=1.2
-    HKL_table, K_in_table, K_out_table=CCB_pat_sim.pat_sim_q(OR,res_cut)
-    K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_table[:,0:3])
+    HKL_table, K_in_table, K_out_table=CCB_pat_sim.pat_sim_q(k_cen[frame,:],OR,res_cut)
+    #K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_table[:,0:3])
+    K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,k_cen[frame,:],HKL_table[:,0:3])
     # plt.figure(figsize=(10,10))
     # plt.scatter(K_out_table[:,0],K_out_table[:,1],s=1,marker='x',c='g')
     # plt.scatter(K_out[:,0],K_out[:,1],s=20,marker='x',color='b')
@@ -108,7 +111,7 @@ def gen_single_match(exp_img_file,res_file,ind1):
     XY2=CCB_pat_sim.off_plane_cor(1e-3,2e8,0.1,11,K_in_table,K_out_table)
 
 
-    PXY0=CCB_pat_sim.XY2P(XY0,75.0e-6,1540+k_out_osx*0.1/cam_len/(75e-6),1724.4+k_out_osy*0.1/cam_len/(75e-6))
+    PXY0=CCB_pat_sim.XY2P(XY0,75.0e-6,1594+k_out_osx*0.1/cam_len/(75e-6),1764+k_out_osy*0.1/cam_len/(75e-6))
     PXY1=CCB_pat_sim.XY2P(XY1,73.5e-6,1535,1723)
     PXY2=CCB_pat_sim.XY2P(XY2,73.5e-6,1535,1723)
     # ################################
@@ -123,6 +126,7 @@ def gen_single_match(exp_img_file,res_file,ind1):
     np.savetxt(out_txt_file,np.hstack((K_in_table,K_out_table,PXY0)),fmt='%13.3e %13.3e %13.3e %13.3e %13.3e %13.3e %7.2f %7.2f')
 	#################################
     plt.figure(figsize=(10,10))
+    plt.title('frame %d'%(frame))
     plt.imshow(exp_img)
     #plt.axis('equal')
     plt.xlim(250,2100)

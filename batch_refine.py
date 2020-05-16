@@ -31,7 +31,12 @@ OR_mat=OR_mat/1.03
 E_ph=17 #in keV
 wave_len=12.40/E_ph #in Angstrom
 wave_len=1e-10*wave_len # convert to m
-k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=1/wave_len*np.array([-0.03115,-0.02308,0.999248]).reshape(3,1)
+k_cen = np.genfromtxt('/home/lichufen/CCB_ind/k_cen.txt')
+
+
 
 def point_match(frame,OR,amp_fact,kosx,kosy,E_ph):
     #frame=0
@@ -66,9 +71,16 @@ def point_match(frame,OR,amp_fact,kosx,kosy,E_ph):
     #HKL_frac, HKL_int, Q_int, Q_resid = CCB_ref.get_HKL(OR,Q_arry,np.array([0,0,0]))
     frac_offset=np.array([0,0,0])
     HKL_frac, HKL_int, Q_int, Q_resid = CCB_ref.get_HKL8(OR,Q_arry,frac_offset)
-    Delta_k, Dist, Dist_1=CCB_ref.exctn_error8_nr(OR,Q_arry,Q_int,frac_offset,E_ph)
+    Delta_k, Dist, Dist_1=CCB_ref.exctn_error8_nr(k_cen[frame,:],OR,Q_arry,Q_int,frac_offset,E_ph)
 
-    ind=np.argsort(Dist,axis=1)
+    K_in_arry = K_out.reshape(-1,3,1) - Q_int #the shape of Q_int and HKL_int is (num,3,8)
+
+
+
+    ind=np.argsort(np.linalg.norm(K_in_arry-k_cen[frame,:].reshape(-1,3,1),axis=1),axis=1)
+
+    #ind=np.argsort(Dist,axis=1)
+	
 
     ind=np.array([ind[m,0] for m in range(ind.shape[0])])
     Dist=np.array([Dist[m,ind[m]] for m in range(Dist.shape[0])])
@@ -77,8 +89,10 @@ def point_match(frame,OR,amp_fact,kosx,kosy,E_ph):
 
 
 
-    K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_int)
-    Delta_k_in_new=K_in_pred-np.array([0,0,1/wave_len]).reshape(1,3)
+    #K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_int)
+    K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,k_cen[frame,:],HKL_int)
+    #Delta_k_in_new=K_in_pred-np.array([0,0,1/wave_len]).reshape(1,3)
+    Delta_k_in_new=K_in_pred-k_cen[frame,:].reshape(1,3)
     Delta_k_out_new=K_out_pred-K_out
 
     #K_in_pred,K_out_pred=CCB_pred.kout_pred8(OR,[0,0,1/wave_len],HKL_int)
@@ -145,7 +159,9 @@ def GA_refine(frame,bounds):
 def frame_refine(frame,res_cut=1,E_ph=17):
     wave_len= 1e-10*12.40/E_ph
     k0=1/wave_len
-    k_in_cen=np.array([0,0,k0]).reshape(3,1)
+    #k_in_cen=np.array([0,0,k0]).reshape(3,1)
+    #k_in_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+    k_in_cen=k_cen[frame,:].reshape(3,1)
     a=15.4029218
     b=21.86892773
     c=25
@@ -162,8 +178,8 @@ def frame_refine(frame,res_cut=1,E_ph=17):
     kosx,kosy=0,0
     OR=CCB_ref.rot_mat_yaxis(-frame+0)@OR_mat
     K_out, K_in_pred, K_out_pred=point_match(frame,OR,amp_fact,kosx,kosy,E_ph)
-    HKL_table, K_in_table, K_out_table=CCB_pat_sim.pat_sim_q(OR,res_cut)
-    K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_table[:,0:3])
+    HKL_table, K_in_table, K_out_table=CCB_pat_sim.pat_sim_q(k_in_cen,OR,res_cut)
+    K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,k_in_cen,HKL_table[:,0:3])
     plt.figure(figsize=(10,10))
     plt.scatter(K_out_table[:,0],K_out_table[:,1],s=1,marker='x',c='g')
     plt.scatter(K_out[:,0],K_out[:,1],s=20,marker='x',color='b')
@@ -172,7 +188,7 @@ def frame_refine(frame,res_cut=1,E_ph=17):
     plt.axis('equal')
     plt.savefig('line_match_before_frame%03d.png'%(frame))
 
-    bounds=((0,90),(-180,180),(-5,5),(0.95,1.00),(-0.0e-2,0.0e-2),(-0e-2,0e-2))
+    bounds=((0,90),(-180,180),(-8,8),(0.95,1.05),(-5e-2,5e-2),(-5e-2,5e-2))
     res=GA_refine(frame,bounds)
     #f.write('frame %03d \n'%(frame))
     #f.write('intial','TG: %7.3e'%CCB_ref._TG_func3(np.array([0,0,0,1,0,0]),frame))
@@ -186,9 +202,9 @@ def frame_refine(frame,res_cut=1,E_ph=17):
     #OR=CCB_ref.Rot_mat_gen(res.x[0],res.x[1],res.x[2])@OR_start
     OR=CCB_ref.Rot_mat_gen(res.x[0],res.x[1],res.x[2])@CCB_ref.rot_mat_yaxis(-frame)@OR_mat
     K_out, K_in_pred, K_out_pred=point_match(frame,OR,amp_fact,kosx,kosy,E_ph)
-    HKL_table, K_in_table, K_out_table=CCB_pat_sim.pat_sim_q(OR,res_cut)
-    K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_table[:,0:3])
-
+    HKL_table, K_in_table, K_out_table=CCB_pat_sim.pat_sim_q(k_in_cen,OR,res_cut)
+    #K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_table[:,0:3])
+    K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,k_in_cen,HKL_table[:,0:3])
 
 
     plt.figure(figsize=(10,10))

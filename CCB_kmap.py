@@ -32,7 +32,11 @@ E_ph=17 #in keV
 #wave_len=12.40/E_ph #in Angstrom
 wave_len=12.40/E_ph #in Angstrom
 wave_len=1e-10*wave_len # convert to m
-k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=1/wave_len*np.array([-0.03115,-0.02308,0.999248]).reshape(3,1)
+k_cen = np.genfromtxt('/home/lichufen/CCB_ind/k_cen.txt')
+
+
 
 def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.txt',thld=10,min_pix=10):
 	'''
@@ -43,7 +47,7 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 	streak_ind=label_filtered_sorted-1
 	res_arry=gm.read_res(res_file)
 	ind=np.where(res_arry[:,0]==frame)[0][0]
-	frame=res_arry[ind,0]
+	frame=int(res_arry[ind,0])
 	theta=res_arry[ind,1]
 	phi=res_arry[ind,2]
 	alpha=res_arry[ind,3]
@@ -51,28 +55,41 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 	k_out_osx=res_arry[ind,5]
 	k_out_osy=res_arry[ind,6]
 	num_streak=streak_ind.shape[0]
+	K_out_arry=np.zeros((num_streak,3))
 	Q_arry=np.zeros((num_streak,3))
 	Pxy_cen_arry=np.zeros((num_streak,2))
 	for ind,s_ind in np.ndenumerate(streak_ind):
 		ind=ind[0]
 		Py_cen,Px_cen=props[s_ind].centroid
 		Pxy_cen_arry[ind,:]=np.array([Px_cen,Py_cen])
-		x_cen=(Px_cen-(1540+k_out_osx*0.1/cam_len/(75e-6)))*75e-6
-		y_cen=(Py_cen-(1724.4+k_out_osy*0.1/cam_len/(75e-6)))*75e-6
+		x_cen=(Px_cen-(1594+k_out_osx*0.1/cam_len/(75e-6)))*75e-6
+		y_cen=(Py_cen-(1764+k_out_osy*0.1/cam_len/(75e-6)))*75e-6
 		#z_cen=0.1025*cam_len
 		z_cen=0.10/cam_len
 		k_cen_dir=np.array([x_cen,y_cen,z_cen])/np.linalg.norm(np.array([x_cen,y_cen,z_cen]))
 		k_out_cen=(1/wave_len)*k_cen_dir
-		Q_cen=k_out_cen-k_cen.reshape(-1,)
+		Q_cen=k_out_cen-k_cen[frame,:].reshape(-1,) # the first rough estimate of Q vector.
+		
+		K_out_arry[ind,:]=k_out_cen
+		
 		Q_arry[ind,:]=Q_cen
 	frac_offset=np.array([0,0,0])
 	OR=CCB_ref.Rot_mat_gen(theta,phi,alpha)@CCB_ref.rot_mat_yaxis(-frame)@OR_mat
-	HKL_frac,HKL_int,Q_int,Q_resid=CCB_ref.get_HKL8(OR,Q_arry,frac_offset)
-	Delta_k, Dist, Dist_1=CCB_ref.exctn_error8_nr(OR,Q_arry,Q_int,frac_offset,E_ph)
-	ind=np.argsort(Dist,axis=1)
+	HkL_frac,HKL_int,Q_int,Q_resid=CCB_ref.get_HKL8(OR,Q_arry,frac_offset) #the shape of HKL_int and Q_int,(num,3,8) 
+	Delta_k, Dist, Dist_1=CCB_ref.exctn_error8_nr(k_cen[frame,:],OR,Q_arry,Q_int,frac_offset,E_ph)
+	
+	K_in_arry = K_out_arry.reshape(-1,3,1)- Q_int
+	K_in_mag = np.linalg.norm(K_in_arry-k_cen[frame,:].reshape(1,3,1),axis=1)
+	
+
+	#ind=np.argsort(Dist,axis=1)
+	ind=np.argsort(K_in_mag,axis=1)
+	#ind=np.argsort(Dist_1,axis=1)
 
 	ind=np.array([ind[m,0] for m in range(ind.shape[0])])
 	Dist=np.array([Dist[m,ind[m]] for m in range(Dist.shape[0])])
+	#Dist_1=np.array([Dist_1[m,ind[m]] for m in range(Dist.shape[0])])
+	
 	HKL_int=np.array([HKL_int[m,:,ind[m]] for m in range(HKL_int.shape[0])])
 	K_pix_arry_all=np.array([]).reshape(-1,13)
 	for ind, s_ind in np.ndenumerate(streak_ind):
@@ -84,8 +101,8 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 		K_pix_arry[:,2]=props[s_ind].coords[:,0] # y coordinate of the pixel
 		K_pix_arry[:,3]=exp_img[K_pix_arry[:,2].astype(np.int),K_pix_arry[:,1].astype(np.int)] # intensity of the pixel
 		K_pix_arry[:,4:7]=HKL_int[ind,:]
-		x_pix=(K_pix_arry[:,1]-(1540+k_out_osx*0.1/cam_len/(75e-6)))*75e-6
-		y_pix=(K_pix_arry[:,2]-(1724.4+k_out_osy*0.1/cam_len/(75e-6)))*75e-6
+		x_pix=(K_pix_arry[:,1]-(1594+k_out_osx*0.1/cam_len/(75e-6)))*75e-6
+		y_pix=(K_pix_arry[:,2]-(1764+k_out_osy*0.1/cam_len/(75e-6)))*75e-6
 		z_pix=np.ones((num_pix,))*0.10/cam_len
 		k_pix_cen_dir=np.hstack((x_pix.reshape(-1,1),y_pix.reshape(-1,1),z_pix.reshape(-1,1)))
 		k_pix_cen_dir=k_pix_cen_dir/np.linalg.norm(k_pix_cen_dir,axis=-1).reshape(-1,1)

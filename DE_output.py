@@ -8,7 +8,7 @@ sys.path.append(os.path.realpath(__file__))
 import numpy as np
 import matplotlib
 import h5py
-matplotlib.use('pdf')
+#matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import Xtal_calc_util as xu
 import CCB_ref

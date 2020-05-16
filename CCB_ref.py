@@ -25,7 +25,11 @@ OR_mat=OR_mat/1.03
 E_ph=17 #in keV
 wave_len=12.40/E_ph #in Angstrom
 wave_len=1e-10*wave_len # convert to m
-k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=1/wave_len*np.array([-0.03115,-0.02308,0.999248]).reshape(3,1)
+k_cen = np.genfromtxt('/home/lichufen/CCB_ind/k_cen.txt')
+
 
 def rot_mat_yaxis(theta_deg):
     Rot_mat=np.zeros((3,3))
@@ -136,9 +140,11 @@ def exctn_error(OR_mat,Q_arry,Q_int,frac_offset):
     return K_in_cen, K_out, Ang_deg ,Delta_k, Dist, Dist_1,valid_ind
 
 
-def exctn_error_nr(OR_mat,Q_arry,Q_int,frac_offset,E_ph):
+def exctn_error_nr(k_cen,OR_mat,Q_arry,Q_int,frac_offset,E_ph):
     wave_len=12.40/E_ph
-    k_cen=np.array([0,0,1e10/wave_len]).reshape(3,1)
+    #k_cen=np.array([0,0,1e10/wave_len]).reshape(3,1)
+    #k_cen=np.array([0,0,1e10/wave_len]).reshape(3,1)
+    k_cen=k_cen.reshape(3,1)
     num_q=Q_arry.shape[0]
 
     if Q_arry.shape[0]!=Q_int.shape[0]:
@@ -237,9 +243,11 @@ def exctn_error8(OR_mat,Q_arry,Q_int,frac_offset):
 
     return K_in_cen, K_out, Ang_deg ,Delta_k, Dist, Dist_1,valid_ind
 
-def exctn_error8_nr(OR_mat,Q_arry,Q_int,frac_offset,E_ph):
-    wave_len=12.40/E_ph
-    k_cen=np.array([0,0,1e10/wave_len]).reshape(3,1)
+def exctn_error8_nr(k_cen,OR_mat,Q_arry,Q_int,frac_offset,E_ph):
+    wave_len=1e-10*12.40/E_ph
+    #k_cen=np.array([0,0,1e10/wave_len]).reshape(3,1)
+    #k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+    k_cen=k_cen.reshape(3,1)
     num_q=Q_arry.shape[0]
 
     if Q_arry.shape[0]!=Q_int.shape[0]:
@@ -545,9 +553,15 @@ def _TG_func3(x,frame):
     K_out=kout_dict['kout_'+str(frame)]
     #HKL_frac, HKL_int, Q_int, Q_resid = get_HKL(OR,Q_arry,np.array([0,0,0]))
     HKL_frac, HKL_int, Q_int, Q_resid = get_HKL8(OR,Q_arry,np.array([0,0,0]))
-    Delta_k, Dist, Dist_1=exctn_error8_nr(OR,Q_arry,Q_int,np.array([0,0,0]),E_ph)
-    ind=np.argsort(Dist,axis=1)
+    Delta_k, Dist, Dist_1=exctn_error8_nr(k_cen[frame,:],OR,Q_arry,Q_int,np.array([0,0,0]),E_ph)
+	
+    K_in_arry = K_out.reshape(-1,3,1) - Q_int #the shape of Q_int and HKL_int is (num,3,8)
+    
 
+	
+    #ind=np.argsort(Dist,axis=1)
+    ind=np.argsort(np.linalg.norm(K_in_arry-k_cen[frame,:].reshape(-1,3,1),axis=1),axis=1)
+   
     ind=np.array([ind[m,0] for m in range(ind.shape[0])])
     Dist=np.array([Dist[m,ind[m]] for m in range(Dist.shape[0])])
     HKL_int=np.array([HKL_int[m,:,ind[m]] for m in range(HKL_int.shape[0])])
@@ -555,14 +569,16 @@ def _TG_func3(x,frame):
 
 
 
-    K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_int)
-    valid_value=(K_in_pred[:,0]<6e8)*(K_in_pred[:,0]>-6e8)*(K_in_pred[:,1]<6e8)*(K_in_pred[:,1]>-6e8)
+    #K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_int)
+    K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,k_cen[frame,:],HKL_int)
+    valid_value=(K_in_pred[:,0]<15e8)*(K_in_pred[:,0]>-15e8)*(K_in_pred[:,1]<15e8)*(K_in_pred[:,1]>-15e8)
     K_in_pred=K_in_pred[valid_value,:]
     K_out_pred=K_out_pred[valid_value,:]
     K_out=K_out[valid_value,:]
     #print(K_out_pred.shape)
     ###############CHECK THE CODES
-    Delta_k_in_new=K_in_pred-np.array([0,0,1/wave_len]).reshape(1,3)
+    #Delta_k_in_new=K_in_pred-np.array([0,0,1/wave_len]).reshape(1,3)
+    Delta_k_in_new=K_in_pred-k_cen[frame,:].reshape(1,3)
     Delta_k_out_new=K_out_pred-K_out
 
     ind_filter_1=np.linalg.norm(Delta_k_out_new,axis=1)<10e8

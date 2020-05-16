@@ -30,7 +30,7 @@ E_ph=17 #in keV
 #wave_len=12.40/E_ph #in Angstrom
 wave_len=12.40/E_ph #in Angstrom
 wave_len=1e-10*wave_len # convert to m
-k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
 
 def single_peak_finder(exp_img_file,frame_no,thld=10,min_pix=15,mask_file='None',interact=False):
 
@@ -114,7 +114,7 @@ if __name__=='__main__':
 	thld=int(sys.argv[2])
 	min_pix=int(sys.argv[3])
 	os.system('export PYTHONUNBUFFERED=1')		
-	kout(exp_img_file,thld,min_pix,cam_len=0.10,pix_size=75e-6,beam_cx=1540,beam_cy=1724.4)
+	kout(exp_img_file,thld,min_pix,cam_len=0.10,pix_size=75e-6,beam_cx=1594,beam_cy=1764)
 
 
 		

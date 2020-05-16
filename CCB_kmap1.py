@@ -32,7 +32,8 @@ E_ph=17 #in keV
 #wave_len=12.40/E_ph #in Angstrom
 wave_len=12.40/E_ph #in Angstrom
 wave_len=1e-10*wave_len # convert to m
-k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+#k_cen=np.array([0,0,1/wave_len]).reshape(3,1)
+k_cen=1/wave_len*np.array([-0.03115,-0.02308,0.999248]).reshape(3,1)
 
 def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.txt',thld=10,min_pix=10):
 	'''
@@ -57,8 +58,8 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 		ind=ind[0]
 		Py_cen,Px_cen=props[s_ind].centroid
 		Pxy_cen_arry[ind,:]=np.array([Px_cen,Py_cen])
-		x_cen=(Px_cen-(1540+k_out_osx*0.1/cam_len/(75e-6)))*75e-6
-		y_cen=(Py_cen-(1724.4+k_out_osy*0.1/cam_len/(75e-6)))*75e-6
+		x_cen=(Px_cen-(1594+k_out_osx*0.1/cam_len/(75e-6)))*75e-6
+		y_cen=(Py_cen-(1764+k_out_osy*0.1/cam_len/(75e-6)))*75e-6
 		#z_cen=0.1025*cam_len
 		z_cen=0.10/cam_len
 		k_cen_dir=np.array([x_cen,y_cen,z_cen])/np.linalg.norm(np.array([x_cen,y_cen,z_cen]))
@@ -79,16 +80,16 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 	for ind, s_ind in np.ndenumerate(streak_ind):
 		ind=ind[0]
 		HKL=HKL_int[ind,:]
-		K_in_SL, K_out_SL=CCB_pat_sim.source_line_scan(k_cen,OR,HKL,rot_ang_step=0.05,rot_ang_range=2.0)
+		K_in_SL, K_out_SL=CCB_pat_sim.source_line_scan(k_cen,OR,HKL,rot_ang_step=0.05,rot_ang_range=3.0)
 		
 		if K_in_SL.shape[0]!=0:
 			K_in_cen_pred=0.5*(K_in_SL[0,:]+K_in_SL[-1,:])
 			K_out_cen_pred=0.5*(K_out_SL[0,:]+K_out_SL[-1,:])
 			print('Reflection [%d,%d,%d]'%(HKL[0],HKL[1],HKL[2]))
 			XY_cen_pred_arry=CCB_pat_sim.in_plane_cor(0,1e8,0.10/cam_len,90,K_in_cen_pred.reshape(-1,3),K_out_cen_pred.reshape(-1,3))
-			PXY_cen_pred_arry=CCB_pat_sim.XY2P(XY_cen_pred_arry,75.0e-6,1540+k_out_osx*0.1/cam_len/(75e-6),1724.4+k_out_osy*0.1/cam_len/(75e-6))
+			PXY_cen_pred_arry=CCB_pat_sim.XY2P(XY_cen_pred_arry,75.0e-6,1594+k_out_osx*0.1/cam_len/(75e-6),1764+k_out_osy*0.1/cam_len/(75e-6))
 			kerror_arry=Pxy_cen_arry[ind,:]-PXY_cen_pred_arry
-			if np.linalg.norm(kerror_arry.reshape(-1,))<=500:	
+			if np.linalg.norm(kerror_arry.reshape(-1,))<=50:	
 				num_pix=props[s_ind].coords.shape[0]
 				K_pix_arry=np.zeros((num_pix,13))	
 				K_pix_arry[:,0]=int(frame)
@@ -98,8 +99,8 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 			
 				K_pix_arry_cor=K_pix_arry[:,1:3]-kerror_arry
 				K_pix_arry[:,4:7]=HKL_int[ind,:]
-				x_pix=(K_pix_arry_cor[:,0]-(1540+k_out_osx*0.1/cam_len/(75e-6)))*75e-6
-				y_pix=(K_pix_arry_cor[:,1]-(1724.4+k_out_osy*0.1/cam_len/(75e-6)))*75e-6
+				x_pix=(K_pix_arry_cor[:,0]-(1594+k_out_osx*0.1/cam_len/(75e-6)))*75e-6
+				y_pix=(K_pix_arry_cor[:,1]-(1764+k_out_osy*0.1/cam_len/(75e-6)))*75e-6
 				z_pix=np.ones((num_pix,))*0.10/cam_len#instead of cam_len
 				k_pix_cen_dir=np.hstack((x_pix.reshape(-1,1),y_pix.reshape(-1,1),z_pix.reshape(-1,1)))
 				k_pix_cen_dir=k_pix_cen_dir/np.linalg.norm(k_pix_cen_dir,axis=-1).reshape(-1,1)
