@@ -13,7 +13,7 @@
 #SBATCH -e BGA_match_%j.err
 ##SBATCH --mail-type=ALL
 #SBATCH --mail-type=END        # notifications for job done & fail
-#SBATCH --mail-user=chufeng.li@cfel.de # send-to address
+##SBATCH --mail-user=chufeng.li@cfel.de # send-to address
 
 source ~/anaconda3/bin/activate base
 

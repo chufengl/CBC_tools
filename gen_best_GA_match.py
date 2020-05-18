@@ -41,8 +41,8 @@ if __name__=='__main__':
     best_GA_res_file_list=glob2.glob(par_dir+'/Best_GA_res_*_*.txt')
     for best_GA_res_file in best_GA_res_file_list:
         best_res_round_dir_list=read_best_res_dir(best_GA_res_file)
-        for best_res_round_dir in best_res_round_dir_list:
-            os.system('cp -fr '+best_res_round_dir+'/line*.png'+' ./.')
+        #for best_res_round_dir in best_res_round_dir_list:
+            #os.system('cp -fr '+best_res_round_dir+'/line*.png'+' ./.')
         os.system('sbatch /home/lichufen/CCB_ind/best_GA_match.sh /home/lichufen/CCB_ind/scan_corrected_00135.h5  '+best_GA_res_file)
         print('batch job submitted')
 

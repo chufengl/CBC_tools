@@ -14,13 +14,16 @@ import CCB_read
 import h5py
 import re
 import matplotlib
-#matplotlib.use('pdf')
+matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 
 OR_mat=np.array([[ 4.47536571e+08,-1.33238725e+08,0.00000000e+00],\
 [9.38439088e+07,6.35408337e+08,0.00000000e+00],\
 [0.00000000e+00,0.00000000e+00,4.00000000e+08]])
 OR_mat=OR_mat/1.03
+rot_mat0 = np.array([[0.97871449,-0.20522657,0],\
+[0.20522657,0.97871449,0],\
+[0,0,1]])
 
 E_ph=17 #in keV
 #wave_len=12.40/E_ph #in Angstrom
@@ -122,8 +125,39 @@ def gen_single_match(exp_img_file,res_file,ind1):
 
 	#################################
 	# save the K_in and K_out arrys in .txt file
+    HKL_table1 = np.repeat(HKL_table[:,0:3],HKL_table[:,3].astype(np.int),axis=0)
+	##################################
+	# Compute the simulated intensity Int_sim
+    theta,phi,alpha=OR_angs
+    rot_mat = CCB_ref.Rot_mat_gen(theta,phi,alpha)@CCB_ref.rot_mat_yaxis(-frame)@rot_mat0
+    with h5py.File('/home/lichufen/CCB_ind/scan_corrected_00135.h5','r') as f:
+        ref_image = np.array(f['/data/data'][frame,:,:]) 
+    xyz_range = [-1.5e-3,-0e-3,-1.1e-3,-0.4e-3,-0.10275,-0.10225]
+    pivot_coor = [-0.75e-3,-0.75e-3,-0.1025]
+    xtal_model0_dict = CCB_pat_sim.xtal_model_init(xyz_range,voxel_size=10e-6)
+    xtal_model_dict = CCB_pat_sim.k_in_render(xtal_model0_dict,rot_mat,pivot_coor,focus_coor=[0,0,-0.129])
+
+    Int_ref_arry = CCB_pat_sim.get_Int_ref('/home/lichufen/CCB_ind/ethc_mk.pdb.hkl')
+    Int_sim = np.zeros((HKL_table1.shape[0],1))
+    for m in range(HKL_table1.shape[0]):
+		
+        HKL = HKL_table1[m,:]
+        k_in = K_in_table[m,:]
+        #print('k_in',k_in)
+        D_value = CCB_pat_sim.get_D(xtal_model_dict,k_in,delta_k_in=1e7)
+        #D_value = 1
+        P_value = CCB_pat_sim.get_P(ref_image,k_in)
+        #P_value = 1
+        Int = CCB_pat_sim.compt_Int_sim(Int_ref_arry,HKL,P_value,D_value)
+        Int_sim[m] = Int
+	##################################
+    Int_sim = Int_sim/1e2  #normalisation
+    output_arry = np.hstack((frame*np.ones((K_in_table.shape[0],1)),PXY0,Int_sim,HKL_table1,K_out_table,K_in_table))
+    ind_nan = np.isnan(Int_sim)+(Int_sim==0)
+    output_arry = output_arry[~ind_nan.reshape(-1,),:]
+	
     out_txt_file='K_map_sim_fr%d.txt'%(frame)
-    np.savetxt(out_txt_file,np.hstack((K_in_table,K_out_table,PXY0)),fmt='%13.3e %13.3e %13.3e %13.3e %13.3e %13.3e %7.2f %7.2f')
+    np.savetxt(out_txt_file,output_arry,fmt=['%3d','%7.1f','%7.1f','%7.2e','%3d','%3d','%3d','%13.3e','%13.3e','%13.3e','%13.3e','%13.3e','%13.3e'])#need to insert the Int_sim entry
 	#################################
     plt.figure(figsize=(10,10))
     plt.title('frame %d'%(frame))
