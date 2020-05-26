@@ -18,7 +18,7 @@ import CCB_pred
 import CCB_pat_sim
 import CCB_read
 #import gen_match_figs as gm
-import CCB_streak_det
+#import CCB_streak_det
 import matplotlib
 #matplotlib.use('TkAgg') # To be adjusted for the batch job mode.
 import matplotlib.pyplot as plt
