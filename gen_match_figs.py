@@ -144,8 +144,8 @@ def gen_single_match(exp_img_file,res_file,ind1):
         HKL = HKL_table1[m,:]
         k_in = K_in_table[m,:]
         #print('k_in',k_in)
-        D_value = CCB_pat_sim.get_D(xtal_model_dict,k_in,delta_k_in=1e7)
-        #D_value = 1
+        #D_value = CCB_pat_sim.get_D(xtal_model_dict,k_in,delta_k_in=1e7)
+        D_value = 1
         P_value = CCB_pat_sim.get_P(ref_image,k_in)
         #P_value = 1
         Int = CCB_pat_sim.compt_Int_sim(Int_ref_arry,HKL,P_value,D_value)
