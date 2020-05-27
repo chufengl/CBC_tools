@@ -12,6 +12,9 @@ import matplotlib.pyplot as plt
 import matplotlib
 #matplotlib.use('pdf')
 import matplotlib.pyplot as plot
+import glob
+import time
+import datetime
 
 E_ph=17
 wave_len= 1e-10*12.40/E_ph
@@ -287,3 +290,63 @@ def compt_Int_sim(Int_ref_arry,HKL,P_value,D_value):
     #print('D_value:',D_value,'P_value',P_value,'Int_ref',Int_ref)
     Int_sim = D_value*Int_ref*P_value
     return Int_sim
+
+def sim_txt2img(sim_txt_file,img_shape):
+    '''
+    converts the simulated diffraction data from the .txt form to numpy array form.
+    :param sim_txt_file: the simulated diffraction txt file
+    :type sim_txt_file:  string
+	:param img_shape:    the shape/dimension of the image array
+    :type img_shape:     tuple
+    :return:             numpy array of the image
+    :rtype:              numpy array
+    '''
+    sim_txt_arry = np.genfromtxt(sim_txt_file)
+    x_ind = np.rint(sim_txt_arry[:,1]).astype(np.int)
+    y_ind = np.rint(sim_txt_arry[:,2]).astype(np.int)
+    Int = sim_txt_arry[:,3]
+    img_arry = np.zeros(img_shape,dtype=np.float)
+    for p in range(sim_txt_arry.shape[0]):
+        if (y_ind[p]<img_shape[0]) and (x_ind[p]<img_shape[1]):
+            img_arry[y_ind[p],x_ind[p]]+=Int[p]
+    return img_arry, sim_txt_arry
+
+def sim_txts2h5(sim_txt_filename_pattern,img_shape):
+    '''
+    convert a list of simulated diffraction txt files to a h5 file
+    :param sim_txt_filename_pattern: the file name pattern to glob a list of
+                          txt files of the simulated diffraction.(suggest full path)
+    :type sim_txt_filename_pattern:  string
+    :return: empty, the h5 file of these simulated diffraction images, in /data/simulation
+    :rytpe: empty
+    
+    :To Do: add the feature to save the file list(list of utf-8 strings)to h5 file.
+    '''
+    def get_frame(file_name):
+        frame=file_name.split('fr')[1].split('.')[0]
+        return int(frame)
+    
+    sim_txt_file_list = glob.glob(sim_txt_filename_pattern)
+    sim_txt_file_list.sort(key=get_frame)
+    start_t = time.time()
+    print('Converting the following simulated diffraction .txt files to h5:')
+    print(''.join(sim_txt_file_list))
+    frame_no_arry = np.zeros((len(sim_txt_file_list),),dtype=np.int8)
+    img_block = np.zeros((len(sim_txt_file_list),int(img_shape[0]),int(img_shape[1])))
+    for m in range(len(sim_txt_file_list)):
+        sim_txt_file = sim_txt_file_list[m]
+        img_arry, sim_txt_arry = sim_txt2img(sim_txt_file,img_shape)
+        frame_no_arry[m] = sim_txt_arry[0,0]
+        img_block[m,:,:] = img_arry
+        print('image %d of %d converted'%(m,len(sim_txt_file_list)))
+    img_block = img_block.astype(np.float32)
+    with h5py.File('sim_data.h5','w') as h:
+        h.create_dataset('/data/simulated_data',data=img_block)
+        h.create_dataset('/data/frame_no',data=frame_no_arry)
+        ######### To Do: store the string list of file names in h5 file.####
+    
+        #####################################
+    print('file saved!!')
+    end_t = time.time()
+    print('took %7.2f seconds.'%(end_t-start_t))
+    return
