@@ -12,10 +12,10 @@
 #SBATCH -o DEREF_%j.out
 #SBATCH -e DEREF_%j.err
 ##SBATCH --mail-type=ALL
-#SBATCH --mail-type=END        # notifications for job done & fail
+##SBATCH --mail-type=END        # notifications for job done & fail
 #SBATCH --mail-user=chufeng.li@cfel.de # send-to address
 
-source ~/anaconda3/bin/activate base
+#source ~/anaconda3/bin/activate base
 
 export PYTHONUNBUFFERED=1
 

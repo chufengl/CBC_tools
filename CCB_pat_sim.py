@@ -29,6 +29,27 @@ OR_mat=np.array([[ 4.47536571e+08,-1.33238725e+08,0.00000000e+00],\
 [9.38439088e+07,6.35408337e+08,0.00000000e+00],\
 [0.00000000e+00,0.00000000e+00,4.00000000e+08]])
 OR_mat=OR_mat/1.03
+
+###################
+# for expanding lattice constants
+expanding_const = 1
+OR_mat = OR_mat/expanding_const
+##################
+
+rot_mat0 = np.array([[0.97871449,-0.20522657,0],\
+[0.20522657,0.97871449,0],\
+[0,0,1]])
+
+#########################
+# for lysozyme 
+#OR_mat0 = 1e10*np.array([[1/79.14,0,0],\
+#[0,1/79.14,0],\
+#[0,0,1/38.02]])
+
+#OR_mat = rot_mat0@OR_mat0
+
+#########################
+
 def Rot_mat_gen_q(q,alpha):
     q=q.reshape(3,1)
     u=q/np.linalg.norm(q,axis=0)
@@ -203,11 +224,17 @@ def xtal_model_init(xyz_range,voxel_size=5e-6):
     for x_p in x0_arry:
         for y_p in y0_arry:
             for z_p in z0_arry:
-                x0.append(x_p)
-                y0.append(y_p)
-                z0.append(z_p)
-                d = np.exp(-(x_p-xtal_cen[0])**2/(xyz_range[1]-xyz_range[0])**2-(y_p-xtal_cen[1])**2/(xyz_range[3]-xyz_range[2])**2-(z_p-xtal_cen[2])**2/(xyz_range[5]-xyz_range[4])**2)
-                D.append(d)  ## binary model as the first try.
+                #x0.append(x_p)
+                #y0.append(y_p)
+                #z0.append(z_p)
+                #d = np.exp(-(x_p-xtal_cen[0])**2/(xyz_range[1]-xyz_range[0])**2-(y_p-xtal_cen[1])**2/(xyz_range[3]-xyz_range[2])**2-(z_p-xtal_cen[2])**2/(xyz_range[5]-xyz_range[4])**2)
+                dist = np.sqrt((x_p-xtal_cen[0])**2+(y_p-xtal_cen[1])**2)
+                if (dist>=0.15e-3)*(dist<=1.5e-3):
+                    x0.append(x_p)
+                    y0.append(y_p)
+                    z0.append(z_p)
+                    d = np.exp(-(x_p-xtal_cen[0])**2/(xyz_range[1]-xyz_range[0])**2-(y_p-xtal_cen[1])**2/(xyz_range[3]-xyz_range[2])**2-(z_p-xtal_cen[2])**2/(xyz_range[5]-xyz_range[4])**2)
+                    D.append(d)  ## binary model as the first try.
     x0 = np.array(x0)
     y0 = np.array(y0)
     z0 = np.array(z0)
@@ -274,7 +301,21 @@ def get_Int_ref(hkl_file):
     Int_ref_arry = np.hstack((Int_ref_arry[:,1:2],Int_ref_arry[:,0:1],Int_ref_arry[:,2:]))
     return Int_ref_arry
 
-def compt_Int_sim(Int_ref_arry,HKL,P_value,D_value):
+def get_Lorf(q_vec,k0):
+    '''
+    computes the Lorentz factor for given.
+
+    '''
+    q_vec = np.array(q_vec).reshape(3,)
+    theta_B = np.arcsin(np.linalg.norm(q_vec)/(2*k0))
+    #Lorf = 1/(np.sin(theta_B)*np.sin(2*theta_B))
+    #Lorf = 1/(np.sin(2*theta_B))
+    Lorf = (np.cos(2*theta_B))**3
+    #Lorf = 1/(np.sin(theta_B))
+    return Lorf
+
+
+def compt_Int_sim(Int_ref_arry,HKL,P_value,D_value,Lorf):
     '''
     computes simulated reflection intensity for given reflection list, HKL, P_value, and D_value
     this function is designed to take imtermediate variables to be more of general use.
@@ -288,7 +329,7 @@ def compt_Int_sim(Int_ref_arry,HKL,P_value,D_value):
         Int_ref = np.nan
         print('HKL not found in reflection list',HKL)
     #print('D_value:',D_value,'P_value',P_value,'Int_ref',Int_ref)
-    Int_sim = D_value*Int_ref*P_value
+    Int_sim = D_value*Int_ref*P_value*Lorf
     return Int_sim
 
 def sim_txt2img(sim_txt_file,img_shape):
@@ -306,10 +347,13 @@ def sim_txt2img(sim_txt_file,img_shape):
     y_ind = np.rint(sim_txt_arry[:,2]).astype(np.int)
     Int = sim_txt_arry[:,3]
     img_arry = np.zeros(img_shape,dtype=np.float)
+    counter = np.zeros(img_shape,dtype=np.int)
     for p in range(sim_txt_arry.shape[0]):
         if (y_ind[p]<img_shape[0]) and (x_ind[p]<img_shape[1]):
             img_arry[y_ind[p],x_ind[p]]+=Int[p]
-    return img_arry, sim_txt_arry
+            counter[y_ind[p],x_ind[p]]+=1
+    img_arry_mean = img_arry/(counter+sys.float_info.epsilon)
+    return img_arry_mean, sim_txt_arry
 
 def sim_txts2h5(sim_txt_filename_pattern,img_shape):
     '''
@@ -330,7 +374,7 @@ def sim_txts2h5(sim_txt_filename_pattern,img_shape):
     sim_txt_file_list.sort(key=get_frame)
     start_t = time.time()
     print('Converting the following simulated diffraction .txt files to h5:')
-    print(''.join(sim_txt_file_list))
+    print('\n'.join(sim_txt_file_list))
     frame_no_arry = np.zeros((len(sim_txt_file_list),),dtype=np.int8)
     img_block = np.zeros((len(sim_txt_file_list),int(img_shape[0]),int(img_shape[1])))
     for m in range(len(sim_txt_file_list)):

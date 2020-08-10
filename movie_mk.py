@@ -9,7 +9,7 @@ import cv2
 import glob2
 
 def get_frame(file_name):
-	frame=file_name.split('fr')[1].split('.')[0] 
+	frame=file_name.split('fr')[-1].split('.')[0] 
 	return int(frame) 
 def mk_movie(file_name_pattern,out_name):
 	img_list=[]

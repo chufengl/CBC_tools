@@ -38,11 +38,14 @@ def read_best_res_dir(res_file):
 
 if __name__=='__main__':
     par_dir=os.path.abspath(sys.argv[1])
+    exp_img_file=os.path.abspath(sys.argv[2])
+    save_fig = sys.argv[3]
+    save_K_sim_txt = sys.argv[4]
     best_GA_res_file_list=glob2.glob(par_dir+'/Best_GA_res_*_*.txt')
     for best_GA_res_file in best_GA_res_file_list:
         best_res_round_dir_list=read_best_res_dir(best_GA_res_file)
         #for best_res_round_dir in best_res_round_dir_list:
             #os.system('cp -fr '+best_res_round_dir+'/line*.png'+' ./.')
-        os.system('sbatch /home/lichufen/CCB_ind/best_GA_match.sh /home/lichufen/CCB_ind/scan_corrected_00135.h5  '+best_GA_res_file)
+        os.system('sbatch /home/lichufen/CCB_ind/scripts/best_GA_match.sh '+exp_img_file+' '+best_GA_res_file+' '+save_fig+' '+save_K_sim_txt)
         print('batch job submitted')
 

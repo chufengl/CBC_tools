@@ -28,6 +28,13 @@ OR_mat=np.array([[ 4.47536571e+08,-1.33238725e+08,0.00000000e+00],\
 [0.00000000e+00,0.00000000e+00,4.00000000e+08]])
 OR_mat=OR_mat/1.03
 
+###################
+# for expanding lattice constants
+expanding_const = 1
+OR_mat = OR_mat/expanding_const
+##################
+
+
 E_ph=17 #in keV
 wave_len=12.40/E_ph #in Angstrom
 wave_len=1e-10*wave_len # convert to m
@@ -63,7 +70,8 @@ def point_match(frame,OR,amp_fact,kosx,kosy,E_ph):
     wave_len=1e-10*12.40/E_ph
     frac_offset=np.array([0,0,0])
 
-    kout_dir_dict=CCB_read.kout_read('/home/lichufen/CCB_ind/k_out.txt')
+    #kout_dir_dict=CCB_read.kout_read('/home/lichufen/CCB_ind/k_out.txt')
+    kout_dir_dict=CCB_read.kout_read('../../k_out.txt')
     kout_dir_dict=CCB_read.kout_dir_adj(kout_dir_dict,amp_fact,kosx,kosy)
     kout_dict,q_dict=CCB_read.get_kout_allframe(kout_dir_dict,E_ph)
     Q_arry=q_dict['q_'+str(frame)]
@@ -168,10 +176,16 @@ def frame_refine(frame,res_cut=1,E_ph=17):
     Alpha=90
     Beta=90
     Gamma=90
-    OR_mat=np.array([[ 4.47536571e+08,-1.33238725e+08,0.00000000e+00],\
-    [9.38439088e+07,6.35408337e+08,0.00000000e+00],\
-    [0.00000000e+00,0.00000000e+00,4.00000000e+08]])
-    OR_mat=OR_mat/1.03
+    #OR_mat=np.array([[ 4.47536571e+08,-1.33238725e+08,0.00000000e+00],\
+    #[9.38439088e+07,6.35408337e+08,0.00000000e+00],\
+    #[0.00000000e+00,0.00000000e+00,4.00000000e+08]])
+    #OR_mat=OR_mat/1.03
+    
+    ###################
+    # for expanding lattice constants
+    #expanding_const = 2
+    #OR_mat = OR_mat/expanding_const
+    ##################
 
 
     amp_fact=1
@@ -231,7 +245,7 @@ def batch_refine(start_frame,end_frame):
 
     for frame in range(start_frame,end_frame+1):
         print('Refining frame %03d'%(frame))
-        res=frame_refine(frame,res_cut=1,E_ph=17)
+        res=frame_refine(frame,res_cut=1*expanding_const,E_ph=17)
         f.write('frame %03d \n'%(frame))
         f.write('intial TG: %7.3e \n'%CCB_ref._TG_func3(np.array([0,0,0,1,0,0]),frame))
         f.write('final TG: %7.3e \n'%CCB_ref._TG_func3(res.x,frame))

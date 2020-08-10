@@ -28,6 +28,13 @@ OR_mat=np.array([[ 4.47536571e+08,-1.33238725e+08,0.00000000e+00],\
 [0.00000000e+00,0.00000000e+00,4.00000000e+08]])
 OR_mat=OR_mat/1.03
 
+###################
+# for expanding lattice constants
+expanding_const = 1
+OR_mat = OR_mat/expanding_const
+##################
+
+
 E_ph=17 #in keV
 #wave_len=12.40/E_ph #in Angstrom
 wave_len=12.40/E_ph #in Angstrom
@@ -43,7 +50,8 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 	get_k_frame,for each frame,
 	 returns the k_in, k_out, HkL_in along with other info from the streak detection.
 	'''
-	label_filtered_sorted,weighted_centroid_filtered,props,exp_img=CCB_streak_det.single_peak_finder(exp_img_file,frame,thld=thld,min_pix=min_pix,mask_file='/home/lichufen/CCB_ind/mask.h5',interact=False)
+	#label_filtered_sorted,weighted_centroid_filtered,props,exp_img=CCB_streak_det.single_peak_finder(exp_img_file,frame,thld=thld,min_pix=min_pix,mask_file='/home/lichufen/CCB_ind/mask.h5',interact=False)
+	label_filtered_sorted,weighted_centroid_filtered,props,exp_img=CCB_streak_det.single_peak_finder(exp_img_file,frame,thld=thld,min_pix=min_pix,mask_file='None',interact=False)
 	streak_ind=label_filtered_sorted-1
 	res_arry=gm.read_res(res_file)
 	ind=np.where(res_arry[:,0]==frame)[0][0]

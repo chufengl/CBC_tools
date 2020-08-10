@@ -22,6 +22,13 @@ OR_mat=np.array([[ 4.47536571e+08,-1.33238725e+08,0.00000000e+00],\
 [0.00000000e+00,0.00000000e+00,4.00000000e+08]])
 OR_mat=OR_mat/1.03
 
+###################
+# for expanding lattice constants
+expanding_const = 1
+OR_mat = OR_mat/expanding_const
+##################
+
+
 E_ph=17 #in keV
 wave_len=12.40/E_ph #in Angstrom
 wave_len=1e-10*wave_len # convert to m
@@ -545,7 +552,7 @@ def _TG_func3(x,frame):
 
     OR_start=rot_mat_zaxis(0)@rot_mat_xaxis(0)@rot_mat_yaxis(-frame)@OR_mat
     OR=Rot_mat@OR_start
-    kout_dir_dict=CCB_read.kout_read('/home/lichufen/CCB_ind/k_out.txt')#changed for batch mode
+    kout_dir_dict=CCB_read.kout_read('../../k_out.txt')#changed for batch mode
     kout_dir_dict=CCB_read.kout_dir_adj(kout_dir_dict,amp_fact,kosx,kosy)
 
     kout_dict,q_dict=CCB_read.get_kout_allframe(kout_dir_dict,E_ph)
