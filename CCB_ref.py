@@ -558,6 +558,7 @@ def _TG_func3(x,frame):
     kout_dict,q_dict=CCB_read.get_kout_allframe(kout_dir_dict,E_ph)
     Q_arry=q_dict['q_'+str(frame)]
     K_out=kout_dict['kout_'+str(frame)]
+    Diff_vector = kout_dict['diff_vector_'+str(frame)] # This is for q,streak constraint.
     #HKL_frac, HKL_int, Q_int, Q_resid = get_HKL(OR,Q_arry,np.array([0,0,0]))
     HKL_frac, HKL_int, Q_int, Q_resid = get_HKL8(OR,Q_arry,np.array([0,0,0]))
     Delta_k, Dist, Dist_1=exctn_error8_nr(k_cen[frame,:],OR,Q_arry,Q_int,np.array([0,0,0]),E_ph)
@@ -568,7 +569,15 @@ def _TG_func3(x,frame):
 	
     #ind=np.argsort(Dist,axis=1)
     ind=np.argsort(np.linalg.norm(K_in_arry-k_cen[frame,:].reshape(-1,3,1),axis=1),axis=1)
-   
+  
+    Ortho_metric = -np.ones((Q_int.shape[0],8))
+    for m in range(Q_int.shape[0]):
+        for k in range(8):
+            ortho = np.inner(Diff_vector[m,:],Q_int[m,:,k])/np.linalg.norm(Q_int[m,:,k].reshape(-1,))/np.linalg.norm(Diff_vector[m,:].reshape(-1,))
+            Ortho_metric[m,k] = np.abs(ortho)
+    #ind = np.argsort(Ortho_metric,axis=1)
+
+
     ind=np.array([ind[m,0] for m in range(ind.shape[0])])
     Dist=np.array([Dist[m,ind[m]] for m in range(Dist.shape[0])])
     HKL_int=np.array([HKL_int[m,:,ind[m]] for m in range(HKL_int.shape[0])])
@@ -577,7 +586,7 @@ def _TG_func3(x,frame):
 
 
     #K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_int)
-    K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,k_cen[frame,:],HKL_int)
+    K_in_pred,K_out_pred=CCB_pat_sim.kout_pred(OR,k_cen[frame,:],HKL_int)
     valid_value=(K_in_pred[:,0]<15e8)*(K_in_pred[:,0]>-15e8)*(K_in_pred[:,1]<15e8)*(K_in_pred[:,1]>-15e8)
     K_in_pred=K_in_pred[valid_value,:]
     K_out_pred=K_out_pred[valid_value,:]

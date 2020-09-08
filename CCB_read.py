@@ -39,21 +39,39 @@ def kout_read(filename):
     kout_dir_dict=dict()
     whole_list=np.genfromtxt(filename,comments='#')
     for frame in range(num_frame):
-        vars()['kout_dir_'+str(frame)]=whole_list[ind[frame]:ind[frame+1],:]
+        vars()['kout_dir_'+str(frame)]=whole_list[ind[frame]:ind[frame+1],0:3]
+        vars()['kout1_dir_'+str(frame)]=whole_list[ind[frame]:ind[frame+1],3:6]
+        vars()['kout2_dir_'+str(frame)]=whole_list[ind[frame]:ind[frame+1],6:9]
         kout_dir_dict['kout_dir_'+str(frame)]=vars()['kout_dir_'+str(frame)]
+        kout_dir_dict['kout1_dir_'+str(frame)]=vars()['kout1_dir_'+str(frame)]
+        kout_dir_dict['kout2_dir_'+str(frame)]=vars()['kout2_dir_'+str(frame)]
     return kout_dir_dict
 
 def kout_dir_adj(kout_dir_dict,amp_fact,kosx,kosy):
     l=list(kout_dir_dict)
-    num_frame=len(l)
+    num_frame=int(len(l)/3)
     for lll in range(num_frame):
-        ll=l[lll]
-        kout_dir=kout_dir_dict[ll]
+        #ll=l[lll]
+        #kout_dir=kout_dir_dict[ll]
+        kout_dir=kout_dir_dict['kout_dir_'+str(lll)]
+        kout1_dir = kout_dir_dict['kout1_dir_'+str(lll)]
+        kout2_dir = kout_dir_dict['kout2_dir_'+str(lll)]
         kout_dir=kout_dir/kout_dir[:,-1].reshape(-1,1) #normalize by the z-component
+        kout1_dir=kout1_dir/kout1_dir[:,-1].reshape(-1,1)
+        kout2_dir=kout2_dir/kout2_dir[:,-1].reshape(-1,1)
         #print(kout_dir)
         kout_dir[:,0:2]=kout_dir[:,0:2]-np.array([kosx,kosy]).reshape(1,2)
         kout_dir[:,0:2]=kout_dir[:,0:2]*amp_fact
-        kout_dir_dict[ll]=kout_dir
+        kout_dir_dict['kout_dir_'+str(lll)]=kout_dir
+
+        kout1_dir[:,0:2]=kout1_dir[:,0:2]-np.array([kosx,kosy]).reshape(1,2)
+        kout1_dir[:,0:2]=kout1_dir[:,0:2]*amp_fact
+        kout_dir_dict['kout1_dir_'+str(lll)]=kout1_dir
+
+        kout2_dir[:,0:2]=kout2_dir[:,0:2]-np.array([kosx,kosy]).reshape(1,2)
+        kout2_dir[:,0:2]=kout2_dir[:,0:2]*amp_fact
+        kout_dir_dict['kout2_dir_'+str(lll)]=kout2_dir
+
         #print(kout_dir)
     return kout_dir_dict
 
@@ -66,16 +84,24 @@ def get_kout(kout_dir,E_ph):
 
 def get_kout_allframe(kout_dir_dict,E_ph):
     l=list(kout_dir_dict)
-    num_frame=len(l)
+    num_frame=int(len(l)/3)
     kout_dict=dict()
     q_dict=dict()
-    for lll in range(len(l)):
-        ll=l[lll]
+    for lll in range(num_frame):
+        #ll=l[lll]
         #print('processing'+ll)
-        kout_dir=kout_dir_dict[ll]
+        kout_dir=kout_dir_dict['kout_dir_'+str(lll)]
         kout=get_kout(kout_dir,E_ph)
+        kout1_dir=kout_dir_dict['kout1_dir_'+str(lll)]
+        kout1=get_kout(kout1_dir,E_ph)
+        kout2_dir=kout_dir_dict['kout2_dir_'+str(lll)]
+        kout2=get_kout(kout2_dir,E_ph)
+        diff_vector = kout2 - kout1
         #q=kout-np.array([0,0,1e10/(12.40/E_ph)]).reshape(1,3)
         q=kout-k_cen[lll,:].reshape(1,3)
         kout_dict['kout_'+str(lll)]=kout
+        kout_dict['kout1_'+str(lll)]=kout1
+        kout_dict['kout2_'+str(lll)]=kout2
+        kout_dict['diff_vector_'+str(lll)]=diff_vector
         q_dict['q_'+str(lll)]=q
     return kout_dict,q_dict

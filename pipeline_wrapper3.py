@@ -21,8 +21,8 @@ print('Done!')
 
 os.system('cat Best_GA_res_*_*.txt > Best_GA_res.txt')
 
-os.system('python /home/lichufen/CCB_ind/scripts/CCB_kmap.py ./sim_data.h5 ./Best_GA_res.txt 0 100 15 20')
-#os.system('python /home/lichufen/CCB_ind/scripts/CCB_kmap.py ~/CCB_ind/scan_corrected_00135.h5 ./Best_GA_res.txt 0 100 1 30')
+#os.system('python /home/lichufen/CCB_ind/scripts/CCB_kmap.py ./sim_data.h5 ./Best_GA_res.txt 0 100 15 20')
+os.system('python /home/lichufen/CCB_ind/scripts/CCB_kmap.py ~/CCB_ind/scan_corrected_00135.h5 ./Best_GA_res.txt 0 100 10 20')
 print('K_map txt files Done!')
 
 os.system('rm -f K_map_sim_fr101.txt')
@@ -33,20 +33,20 @@ os.system('cat K_map_fr*.txt > K_map_fr101.txt')
 #print('Generating Dataset object....\n counting time...')
 st = datetime.datetime.now()
 #d_sim = CCB_int_proc.Dataset('K_map_sim_fr101.txt')
-#d_exp = CCB_int_proc.Dataset('K_map_fr101.txt')
+d_exp = CCB_int_proc.Dataset('K_map_fr101.txt')
 et = datetime.datetime.now()
 dt = et - st
 
 print('Generated, took %f seconds'%(dt.total_seconds()))
 st = datetime.datetime.now()
-print('Merging sim data set...')
+#print('Merging sim data set...')
 #d_sim.merge_all_HKL_crystfel()
 #os.system('mv all_HKL_crystfel.hkl   sim_HKL_nomask_crystfel.hkl')
-print('Done!')
+#print('Done!')
 
 print('Merging exp data set...')
-#d_exp.merge_all_HKL_crystfel()
-#os.system('mv all_HKL_crystfel.hkl   ref_HKL_nomask_crystfel.hkl')
+d_exp.merge_all_HKL_crystfel()
+os.system('mv all_HKL_crystfel.hkl   ref_HKL_crystfel_ave0.hkl')
 print('Done!')
 et = datetime.datetime.now()
 dt = et - st

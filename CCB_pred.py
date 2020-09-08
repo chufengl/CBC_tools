@@ -12,6 +12,9 @@ import matplotlib
 #matplotlib.use('pdf')
 import matplotlib.pyplot as plot
 
+import CCB_pat_sim
+
+
 def kout_pred(OR_mat,k_in_cen,HKL_int):
     #NA. is the numeriacal aperture, now a single value salar, in radians.
     OR_mat=OR_mat.reshape(3,3)
@@ -28,8 +31,13 @@ def kout_pred(OR_mat,k_in_cen,HKL_int):
         p_u=np.cross(n_u,q_int,axis=0)
         p_u=p_u/np.linalg.norm(p_u,axis=0)
         p=np.sqrt(np.linalg.norm(k_in_cen,axis=0)**2-np.linalg.norm(q_int/2,axis=0)**2)*p_u
-        k_in=p-q_int/2
-        k_out=k_in+q_int
+        k_in_s=p-q_int/2
+        k_out_s=k_in_s+q_int
+        ################## change to the mid-points of the streaks
+        K_in_SL, K_out_SL = CCB_pat_sim.source_line_scan(k_in_cen,OR_mat,hkl,rot_ang_step=0.05,rot_ang_range=3.0)
+        k_in = np.nanmean(K_in_SL,axis=0)
+        k_out = k_in + q_int
+        ##################
         K_in_pred[num,:]=k_in.reshape(-1)
         K_out_pred[num,:]=k_out.reshape(-1)
     return K_in_pred,K_out_pred

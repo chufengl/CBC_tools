@@ -43,15 +43,19 @@ wave_len=1e-10*wave_len # convert to m
 #k_cen=1/wave_len*np.array([-0.03115,-0.02308,0.999248]).reshape(3,1)
 k_cen = np.genfromtxt('/home/lichufen/CCB_ind/k_cen.txt')
 
-
+pix_size = 75e-6
 
 def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.txt',thld=10,min_pix=10):
 	'''
 	get_k_frame,for each frame,
 	 returns the k_in, k_out, HkL_in along with other info from the streak detection.
 	'''
-	#label_filtered_sorted,weighted_centroid_filtered,props,exp_img=CCB_streak_det.single_peak_finder(exp_img_file,frame,thld=thld,min_pix=min_pix,mask_file='/home/lichufen/CCB_ind/mask.h5',interact=False)
-	label_filtered_sorted,weighted_centroid_filtered,props,exp_img=CCB_streak_det.single_peak_finder(exp_img_file,frame,thld=thld,min_pix=min_pix,mask_file='None',interact=False)
+	if 'sim' not in exp_img_file:
+		label_filtered_sorted,weighted_centroid_filtered,props,exp_img=CCB_streak_det.single_peak_finder(exp_img_file,frame,thld=thld,min_pix=min_pix,mask_file='/home/lichufen/CCB_ind/mask.h5',interact=False)
+	else:
+		label_filtered_sorted,weighted_centroid_filtered,props,exp_img=CCB_streak_det.single_peak_finder(exp_img_file,frame,thld=thld,min_pix=min_pix,mask_file='None',interact=False)
+	
+
 	streak_ind=label_filtered_sorted-1
 	res_arry=gm.read_res(res_file)
 	ind=np.where(res_arry[:,0]==frame)[0][0]
@@ -62,6 +66,21 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 	cam_len=res_arry[ind,4]
 	k_out_osx=res_arry[ind,5]
 	k_out_osy=res_arry[ind,6]
+
+	num_s=weighted_centroid_filtered.shape[0]
+	end_point1 = np.array([[props[label-1].coords.min(axis=0)[0], props[label-1].coords.min(axis=0)[1]] if props[label-1].orientation>=0 else [props[label-1].coords.min(axis=0)[0], props[label-1].coords.max(axis=0)[1]]  for label in label_filtered_sorted])
+	end_point2 = np.array([[props[label-1].coords.max(axis=0)[0], props[label-1].coords.max(axis=0)[1]] if props[label-1].orientation>=0 else [props[label-1].coords.max(axis=0)[0], props[label-1].coords.min(axis=0)[1]]  for label in label_filtered_sorted])
+	end_vector1 = np.hstack(((end_point1[:,-1::-1]-np.array([(1594+k_out_osx*0.1/cam_len/(75e-6)),(1764+k_out_osy*0.1/cam_len/(75e-6))]).reshape(-1,2))*pix_size/cam_len,np.ones((num_s,1))))
+	end_vector2 = np.hstack(((end_point2[:,-1::-1]-np.array([(1594+k_out_osx*0.1/cam_len/(75e-6)),(1764+k_out_osy*0.1/cam_len/(75e-6))]).reshape(-1,2))*pix_size/cam_len,np.ones((num_s,1))))
+	end_vector1 = end_vector1/(np.linalg.norm(end_vector1,axis=-1).reshape(-1,1))
+	end_vector2 = end_vector2/(np.linalg.norm(end_vector2,axis=-1).reshape(-1,1))
+	diff_vector = end_vector2 - end_vector1
+	diff_vector = diff_vector/(np.linalg.norm(diff_vector,axis=-1).reshape(-1,1))
+	Diff_vector = diff_vector*(1/wave_len)
+
+
+
+
 	num_streak=streak_ind.shape[0]
 	K_out_arry=np.zeros((num_streak,3))
 	Q_arry=np.zeros((num_streak,3))
@@ -93,6 +112,14 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 	#ind=np.argsort(Dist,axis=1)
 	ind=np.argsort(K_in_mag,axis=1)
 	#ind=np.argsort(Dist_1,axis=1)
+
+	Ortho_metric = -np.ones((Q_int.shape[0],8))
+	for m in range(Q_int.shape[0]):
+		for k in range(8):
+			ortho = np.inner(Diff_vector[m,:],Q_int[m,:,k])/np.linalg.norm(Q_int[m,:,k].reshape(-1,))/np.linalg.norm(Diff_vector[m,:].reshape(-1,))
+			Ortho_metric[m,k] = np.abs(ortho)
+	#ind = np.argsort(Ortho_metric,axis=1)
+
 
 	ind=np.array([ind[m,0] for m in range(ind.shape[0])])
 	Dist=np.array([Dist[m,ind[m]] for m in range(Dist.shape[0])])

@@ -10,7 +10,7 @@ matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import Xtal_calc_util as xu
 import CCB_ref
-import CCB_pred
+#import CCB_pred
 import CCB_read
 import CCB_pat_sim
 import matplotlib.pyplot as plt
@@ -76,6 +76,7 @@ def point_match(frame,OR,amp_fact,kosx,kosy,E_ph):
     kout_dict,q_dict=CCB_read.get_kout_allframe(kout_dir_dict,E_ph)
     Q_arry=q_dict['q_'+str(frame)]
     K_out=kout_dict['kout_'+str(frame)]
+    Diff_vector = kout_dict['diff_vector_'+str(frame)] # This is for q,streak constraint.
     #HKL_frac, HKL_int, Q_int, Q_resid = CCB_ref.get_HKL(OR,Q_arry,np.array([0,0,0]))
     frac_offset=np.array([0,0,0])
     HKL_frac, HKL_int, Q_int, Q_resid = CCB_ref.get_HKL8(OR,Q_arry,frac_offset)
@@ -88,7 +89,13 @@ def point_match(frame,OR,amp_fact,kosx,kosy,E_ph):
     ind=np.argsort(np.linalg.norm(K_in_arry-k_cen[frame,:].reshape(-1,3,1),axis=1),axis=1)
 
     #ind=np.argsort(Dist,axis=1)
-	
+
+    Ortho_metric = -np.ones((Q_int.shape[0],8))
+    for m in range(Q_int.shape[0]):
+        for k in range(8):
+            ortho = np.inner(Diff_vector[m,:],Q_int[m,:,k])/np.linalg.norm(Q_int[m,:,k].reshape(-1,))/np.linalg.norm(Diff_vector[m,:].reshape(-1,))
+            Ortho_metric[m,k] = np.abs(ortho)
+    #ind = np.argsort(Ortho_metric,axis=1)
 
     ind=np.array([ind[m,0] for m in range(ind.shape[0])])
     Dist=np.array([Dist[m,ind[m]] for m in range(Dist.shape[0])])
@@ -98,7 +105,7 @@ def point_match(frame,OR,amp_fact,kosx,kosy,E_ph):
 
 
     #K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_int)
-    K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,k_cen[frame,:],HKL_int)
+    K_in_pred,K_out_pred=CCB_pat_sim.kout_pred(OR,k_cen[frame,:],HKL_int)
     #Delta_k_in_new=K_in_pred-np.array([0,0,1/wave_len]).reshape(1,3)
     Delta_k_in_new=K_in_pred-k_cen[frame,:].reshape(1,3)
     Delta_k_out_new=K_out_pred-K_out
@@ -157,12 +164,11 @@ def GA_refine(frame,bounds):
     args=(frame,)
     #bounds=((0,90),(-180,180),(-6,6),(0.95,1.05),(-5e-2,5e-2),(-5e-2,5e-2),(-0.1,0.1),(-0.1,0.1),(-0.1,0.1),(-3,3),(-3,3),(-3,3))
     res = scipy.optimize.differential_evolution(CCB_ref._TG_func3,bounds,args=args,strategy='best1bin',disp=True,polish=True)
-    #res = scipy.optimize.differential_evolution(CCB_ref._TG_func5,bounds,args=args,strategy='best1bin',disp=True,polish=True)
     print('intial','TG: %7.3e'%CCB_ref._TG_func3(np.array([0,0,0,1,0,0]),frame))
     print('final',res.x,'TG: %7.3e'%CCB_ref._TG_func3(res.x,frame))
     #print('intial','TG: %7.3e'%CCB_ref._TG_func5(np.array([0,0,0,1,0,0,a,b,c,Alpha,Beta,Gamma]),frame))
-    #print('final',res.x,'TG: %7.3e'%CCB_ref._TG_func5(res.x,frame))
     return res
+
 
 def frame_refine(frame,res_cut=1,E_ph=17):
     wave_len= 1e-10*12.40/E_ph
@@ -191,9 +197,10 @@ def frame_refine(frame,res_cut=1,E_ph=17):
     amp_fact=1
     kosx,kosy=0,0
     OR=CCB_ref.rot_mat_yaxis(-frame+0)@OR_mat
+    #print(OR)
     K_out, K_in_pred, K_out_pred=point_match(frame,OR,amp_fact,kosx,kosy,E_ph)
     HKL_table, K_in_table, K_out_table=CCB_pat_sim.pat_sim_q(k_in_cen,OR,res_cut)
-    K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,k_in_cen,HKL_table[:,0:3])
+    K_in_pred_s,K_out_pred_s=CCB_pat_sim.kout_pred(OR,k_in_cen,HKL_table[:,0:3])
     plt.figure(figsize=(10,10))
     plt.scatter(K_out_table[:,0],K_out_table[:,1],s=1,marker='x',c='g')
     plt.scatter(K_out[:,0],K_out[:,1],s=20,marker='x',color='b')
@@ -218,7 +225,7 @@ def frame_refine(frame,res_cut=1,E_ph=17):
     K_out, K_in_pred, K_out_pred=point_match(frame,OR,amp_fact,kosx,kosy,E_ph)
     HKL_table, K_in_table, K_out_table=CCB_pat_sim.pat_sim_q(k_in_cen,OR,res_cut)
     #K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_table[:,0:3])
-    K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,k_in_cen,HKL_table[:,0:3])
+    K_in_pred_s,K_out_pred_s=CCB_pat_sim.kout_pred(OR,k_in_cen,HKL_table[:,0:3])
 
 
     plt.figure(figsize=(10,10))

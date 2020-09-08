@@ -7,7 +7,7 @@ import numpy as np
 import h5py
 import Xtal_calc_util as xu
 import CCB_ref
-import CCB_pred
+#import CCB_pred
 import matplotlib.pyplot as plt
 import matplotlib
 #matplotlib.use('pdf')
@@ -49,6 +49,40 @@ rot_mat0 = np.array([[0.97871449,-0.20522657,0],\
 #OR_mat = rot_mat0@OR_mat0
 
 #########################
+
+
+def kout_pred(OR_mat,k_in_cen,HKL_int):
+    #NA. is the numeriacal aperture, now a single value salar, in radians.
+    OR_mat=OR_mat.reshape(3,3)
+    k_in_cen=np.array(k_in_cen).reshape(3,1)
+    num_q=HKL_int.shape[0]
+    K_in_pred=np.zeros((num_q,3))
+    K_out_pred=np.zeros((num_q,3))
+
+    for num in range(num_q):
+        hkl=HKL_int[num,:].reshape(3,1)
+        q_int=OR_mat@hkl
+        n=np.cross(q_int,k_in_cen,axis=0)
+        n_u=n/np.linalg.norm(n,axis=0)
+        p_u=np.cross(n_u,q_int,axis=0)
+        p_u=p_u/np.linalg.norm(p_u,axis=0)
+        p=np.sqrt(np.linalg.norm(k_in_cen,axis=0)**2-np.linalg.norm(q_int/2,axis=0)**2)*p_u
+        k_in_s=p-q_int/2
+        k_out_s=k_in_s+q_int
+        ################## change to the mid-points of the streaks
+        K_in_SL, K_out_SL = source_line_scan(k_in_cen,OR_mat,hkl,rot_ang_step=0.05,rot_ang_range=3.0)
+        #if K_in_SL.shape[0]!=0:
+        k_in = K_in_SL.mean(axis=0).reshape(3,1)
+        #print(k_in.shape)
+        k_out = k_in + q_int.reshape(3,1)
+        #print(k_out.shape)
+        ##################
+        K_in_pred[num,:]=k_in.reshape(-1)
+        K_out_pred[num,:]=k_out.reshape(-1)
+    return K_in_pred,K_out_pred
+
+
+
 
 def Rot_mat_gen_q(q,alpha):
     q=q.reshape(3,1)

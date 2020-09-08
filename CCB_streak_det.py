@@ -48,7 +48,7 @@ def single_peak_finder(exp_img_file,frame_no,thld=10,min_pix=15,mask_file='None'
 		sys.exit('the mask file option is inproper.')
 
 	bimg=bimg*mask
-	all_labels=measure.label(bimg,connectivity=2) #connectivity is important here, for sim data,use 2, for exp data use 1
+	all_labels=measure.label(bimg,connectivity=1) #connectivity is important here, for sim data,use 2, for exp data use 1
 	props=measure.regionprops(all_labels,img_arry)
 
 	area=np.array([r.area for r in props]).reshape(-1,)
@@ -110,12 +110,25 @@ def kout(exp_img_file,thld,min_pix,cam_len=0.15,pix_size=75e-6,beam_cx=1505,beam
 		print('frame %d in process'%(frame_no))
 		label_filtered_sorted,weighted_centroid_filtered,props,img_arry=single_peak_finder(exp_img_file,frame_no,thld=thld,min_pix=min_pix,mask_file='/home/lichufen/CCB_ind/mask.h5')
 		num_s=weighted_centroid_filtered.shape[0]
+
+		end_point1 = np.array([[props[label-1].coords.min(axis=0)[0], props[label-1].coords.min(axis=0)[1]] if props[label-1].orientation>=0 else [props[label-1].coords.min(axis=0)[0], props[label-1].coords.max(axis=0)[1]]  for label in label_filtered_sorted])
+		end_point2 = np.array([[props[label-1].coords.max(axis=0)[0], props[label-1].coords.max(axis=0)[1]] if props[label-1].orientation>=0 else [props[label-1].coords.max(axis=0)[0], props[label-1].coords.min(axis=0)[1]]  for label in label_filtered_sorted])
+		
+		
 		k_out=np.hstack(((weighted_centroid_filtered[:,-1::-1]-np.array([beam_cx,beam_cy]).reshape(-1,2))*pix_size/cam_len,np.ones((num_s,1))))
 		k_out=k_out/(np.linalg.norm(k_out,axis=-1).reshape(-1,1))
+		
+		end_vector1 = np.hstack(((end_point1[:,-1::-1]-np.array([beam_cx,beam_cy]).reshape(-1,2))*pix_size/cam_len,np.ones((num_s,1))))
+		end_vector2 = np.hstack(((end_point2[:,-1::-1]-np.array([beam_cx,beam_cy]).reshape(-1,2))*pix_size/cam_len,np.ones((num_s,1))))
+		end_vector1 = end_vector1/(np.linalg.norm(end_vector1,axis=-1).reshape(-1,1))
+		end_vector2 = end_vector2/(np.linalg.norm(end_vector2,axis=-1).reshape(-1,1))
+		diff_vector = end_vector2 - end_vector1
+		diff_vector = diff_vector/(np.linalg.norm(diff_vector,axis=-1).reshape(-1,1))
+		
 		o.write('# Frame %d\n'%(frame_no))
 		for m in range(num_s):
 
-			o.write('%6.3f  %6.3f  %6.3f\n'%(k_out[m,0],k_out[m,1],k_out[m,2]))
+			o.write('%6.3f  %6.3f  %6.3f  %6.3f  %6.3f  %6.3f  %6.3f  %6.3f  %6.3f  %6.3f  %6.3f  %6.3f\n'%(k_out[m,0],k_out[m,1],k_out[m,2],end_vector1[m,0],end_vector1[m,1],end_vector1[m,2],end_vector2[m,0],end_vector2[m,1],end_vector2[m,2],diff_vector[m,0],diff_vector[m,1],diff_vector[m,2]))
 		print('Done.')
 	o.close()
 	print('ALL Done!')
