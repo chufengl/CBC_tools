@@ -78,7 +78,7 @@ def get_Ks(frame,OR_angs):
     OR=CCB_ref.Rot_mat_gen(theta,phi,alpha)@CCB_ref.rot_mat_yaxis(-frame)@OR_mat
     res_cut=1.2*expanding_const #adapted for artifical lattice testing.
     HKL_table, K_in_table, K_out_table=CCB_pat_sim.pat_sim_q(k_cen[frame,:],OR,res_cut)
-    K_in_pred_s,K_out_pred_s=CCB_pred.kout_pred(OR,k_cen[frame,:],HKL_table[:,0:3])
+    K_in_pred_s,K_out_pred_s=CCB_pat_sim.kout_pred(OR,k_cen[frame,:],HKL_table[:,0:3])
     return HKL_table, K_in_table, K_out_table, K_in_pred_s,K_out_pred_s
 
 def read_res(res_file):
@@ -182,7 +182,7 @@ def gen_single_match(exp_img_file,res_file,ind1,save_fig=True,save_K_sim_txt=Tru
         plt.xlim(250,2100)
         plt.ylim(500,2300)
         plt.clim(0,50)
-        plt.scatter(PXY0[:,0],PXY0[:,1],s=0.2,marker='x',c='g')
+        plt.scatter(PXY0[:,0],PXY0[:,1],s=0.02,marker='x',c='g')
         plt.savefig('match_'+'fr'+str(int(frame))+'.png')
     print('frame %d done!\n'%(frame))
     return None

@@ -102,23 +102,25 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 		Q_arry[ind,:]=Q_cen
 	frac_offset=np.array([0,0,0])
 	OR=CCB_ref.Rot_mat_gen(theta,phi,alpha)@CCB_ref.rot_mat_yaxis(-frame)@OR_mat
-	HkL_frac,HKL_int,Q_int,Q_resid=CCB_ref.get_HKL8(OR,Q_arry,frac_offset) #the shape of HKL_int and Q_int,(num,3,8) 
+	HKL_frac,HKL_int,Q_int,Q_resid=CCB_ref.get_HKL8(OR,Q_arry,frac_offset) #the shape of HKL_int and Q_int,(num,3,8) 
 	Delta_k, Dist, Dist_1=CCB_ref.exctn_error8_nr(k_cen[frame,:],OR,Q_arry,Q_int,frac_offset,E_ph)
 	
 	K_in_arry = K_out_arry.reshape(-1,3,1)- Q_int
 	K_in_mag = np.linalg.norm(K_in_arry-k_cen[frame,:].reshape(1,3,1),axis=1)
 	
-
+	K_out_pred_arry = np.zeros_like(HKL_int)
+	for n in range(K_out_pred_arry.shape[2]):
+		HKL = HKL_int[:,:,n]
+		K_in_pred,K_out_pred = CCB_pat_sim.kout_pred(OR,k_cen[frame,:],HKL)
+		K_out_pred_arry[:,:,n] = K_out_pred
+	
+	K_out_mag = np.linalg.norm(K_out_arry.reshape(K_out_pred_arry.shape[0],K_out_pred_arry.shape[1],1)-K_out_pred_arry,axis=1)
+	
+	
+	ind=np.argsort(K_out_mag,axis=1)
 	#ind=np.argsort(Dist,axis=1)
-	ind=np.argsort(K_in_mag,axis=1)
+	#ind=np.argsort(K_in_mag,axis=1)
 	#ind=np.argsort(Dist_1,axis=1)
-
-	Ortho_metric = -np.ones((Q_int.shape[0],8))
-	for m in range(Q_int.shape[0]):
-		for k in range(8):
-			ortho = np.inner(Diff_vector[m,:],Q_int[m,:,k])/np.linalg.norm(Q_int[m,:,k].reshape(-1,))/np.linalg.norm(Diff_vector[m,:].reshape(-1,))
-			Ortho_metric[m,k] = np.abs(ortho)
-	#ind = np.argsort(Ortho_metric,axis=1)
 
 
 	ind=np.array([ind[m,0] for m in range(ind.shape[0])])
@@ -126,9 +128,15 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 	#Dist_1=np.array([Dist_1[m,ind[m]] for m in range(Dist.shape[0])])
 	
 	HKL_int=np.array([HKL_int[m,:,ind[m]] for m in range(HKL_int.shape[0])])
+	K_in_arry = np.array([K_in_arry[m,:,ind[m]] for m in range(K_in_arry.shape[0])])
+	pupil_valid = np.array([CCB_pat_sim.pupil_func(k_in) for k_in in K_in_arry])
+	
 	K_pix_arry_all=np.array([]).reshape(-1,13)
 	for ind, s_ind in np.ndenumerate(streak_ind):
 		ind=ind[0]
+		#if not pupil_valid[ind]:
+		#	print('outlier')
+		#	continue
 		num_pix=props[s_ind].coords.shape[0]
 		K_pix_arry=np.zeros((num_pix,13))	
 		K_pix_arry[:,0]=int(frame)
@@ -147,8 +155,15 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 		#print(Q)
 		K_pix_arry[:,10:13]=K_pix_arry[:,7:10]-Q.reshape(1,3)
 	######	col0:frame, col1~3: x,y,I, col4~6:HKL, col7~9:kout, col10~12:k_in
+		kin_val = np.array([CCB_pat_sim.pupil_func(k_in) for k_in in K_pix_arry[:,10:13]])
+		if (kin_val.sum()/kin_val.shape[0])<0.8:
+			print('outlier',K_pix_arry[0,4:7])
+			#print(kin_val)
+			continue
 		K_pix_arry_all=np.vstack((K_pix_arry_all,K_pix_arry))
-
+		
+		#kin_valid = [CCB_pat_sim.pupil_func(k_in) for k_in in K_pix_arry_all[:,10:13]]
+		#K_pix_arry_all = K_pix_arry_all[kin_valid]
 	return K_pix_arry_all, HKL_int, Pxy_cen_arry, OR
 
 
