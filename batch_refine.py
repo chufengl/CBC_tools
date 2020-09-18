@@ -6,7 +6,7 @@ sys.path.append(os.path.realpath(__file__))
 import numpy as np
 import matplotlib
 import h5py
-matplotlib.use('pdf')
+#matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 import Xtal_calc_util as xu
 import CCB_ref
@@ -90,12 +90,6 @@ def point_match(frame,OR,amp_fact,kosx,kosy,E_ph):
 
     #ind=np.argsort(Dist,axis=1)
 
-    Ortho_metric = -np.ones((Q_int.shape[0],8))
-    for m in range(Q_int.shape[0]):
-        for k in range(8):
-            ortho = np.inner(Diff_vector[m,:],Q_int[m,:,k])/np.linalg.norm(Q_int[m,:,k].reshape(-1,))/np.linalg.norm(Diff_vector[m,:].reshape(-1,))
-            Ortho_metric[m,k] = np.abs(ortho)
-    #ind = np.argsort(Ortho_metric,axis=1)
 
     ind=np.array([ind[m,0] for m in range(ind.shape[0])])
     Dist=np.array([Dist[m,ind[m]] for m in range(Dist.shape[0])])
@@ -169,6 +163,15 @@ def GA_refine(frame,bounds):
     #print('intial','TG: %7.3e'%CCB_ref._TG_func5(np.array([0,0,0,1,0,0,a,b,c,Alpha,Beta,Gamma]),frame))
     return res
 
+def Latt_refine(frame_list,x0,bounds,res_file):
+    args = (frame_list,res_file,)
+    #res = scipy.optimize.fmin_l_bfgs_b(CCB_ref._TG_func8,x0,bounds=bounds,approx_grad=1,args=args,disp=1)
+    #res = scipy.optimize.minimize(CCB_ref._TG_func8,x0,bounds=bounds,args=args,options={'disp':1})
+    res = scipy.optimize.differential_evolution(CCB_ref._TG_func8,bounds,args=args,strategy='best1bin',disp=True,polish=True,workers=4)
+    
+    print('initial','TG: %7.3e'%CCB_ref._TG_func8(x0,frame_list,res_file))
+    print('final',res.x,'\nTG: %7.3e'%CCB_ref._TG_func8(res.x,frame_list,res_file))
+    return res
 
 def frame_refine(frame,res_cut=1,E_ph=17):
     wave_len= 1e-10*12.40/E_ph

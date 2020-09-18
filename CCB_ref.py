@@ -11,6 +11,8 @@ import matplotlib
 #matplotlib.use('pdf')
 import matplotlib.pyplot as plot
 
+import gen_match_figs as gm
+
 a=15.4029218
 b=21.86892773
 c=25
@@ -570,12 +572,6 @@ def _TG_func3(x,frame):
     #ind=np.argsort(Dist,axis=1)
     ind=np.argsort(np.linalg.norm(K_in_arry-k_cen[frame,:].reshape(-1,3,1),axis=1),axis=1)
   
-    Ortho_metric = -np.ones((Q_int.shape[0],8))
-    for m in range(Q_int.shape[0]):
-        for k in range(8):
-            ortho = np.inner(Diff_vector[m,:],Q_int[m,:,k])/np.linalg.norm(Q_int[m,:,k].reshape(-1,))/np.linalg.norm(Diff_vector[m,:].reshape(-1,))
-            Ortho_metric[m,k] = np.abs(ortho)
-    #ind = np.argsort(Ortho_metric,axis=1)
 
 
     ind=np.array([ind[m,0] for m in range(ind.shape[0])])
@@ -770,4 +766,84 @@ def _TG_func6(x,frame,x0_GA):
     #print(num_q)
     TG_norm=np.sqrt(TG/num_q)
     print(TG_norm)
+    return TG_norm
+
+
+def TG_func7(x,frame,res_file):
+    E_ph=17
+    wave_len=1e-10*12.40/E_ph
+
+    res_arry = gm.read_res(res_file)
+    ind = (res_arry[:,0]==int(frame)).nonzero()[0][0]
+    theta = res_arry[ind,1]
+    phi = res_arry[ind,2]
+    alpha = res_arry[ind,3]
+    amp_fact = res_arry[ind,4]
+    kosx = res_arry[ind,5]
+    kosy = res_arry[ind,6]
+    
+    ax, ay, az, bx, by, bz, cx, cy, cz =x
+    OR_mat1 = np.array([[ax,bx,cx],[ay,by,cy],[az,bz,cz]])
+    Rot_mat = Rot_mat_gen(theta,phi,alpha)
+
+    OR_start=rot_mat_zaxis(0)@rot_mat_xaxis(0)@rot_mat_yaxis(-frame)@OR_mat1
+    OR=Rot_mat@OR_start
+    kout_dir_dict=CCB_read.kout_read('../../k_out.txt')#changed for batch mode
+    kout_dir_dict=CCB_read.kout_dir_adj(kout_dir_dict,amp_fact,kosx,kosy)
+
+    kout_dict,q_dict=CCB_read.get_kout_allframe(kout_dir_dict,E_ph)
+    Q_arry=q_dict['q_'+str(frame)]
+    K_out=kout_dict['kout_'+str(frame)]
+    Diff_vector = kout_dict['diff_vector_'+str(frame)] # This is for q,streak constraint.
+    #HKL_frac, HKL_int, Q_int, Q_resid = get_HKL(OR,Q_arry,np.array([0,0,0]))
+    HKL_frac, HKL_int, Q_int, Q_resid = get_HKL8(OR,Q_arry,np.array([0,0,0]))
+    Delta_k, Dist, Dist_1=exctn_error8_nr(k_cen[frame,:],OR,Q_arry,Q_int,np.array([0,0,0]),E_ph)
+
+    K_in_arry = K_out.reshape(-1,3,1) - Q_int #the shape of Q_int and HKL_int is (num,3,8)
+    ind=np.argsort(np.linalg.norm(K_in_arry-k_cen[frame,:].reshape(-1,3,1),axis=1),axis=1)
+
+
+    ind=np.array([ind[m,0] for m in range(ind.shape[0])])
+    Dist=np.array([Dist[m,ind[m]] for m in range(Dist.shape[0])])
+    HKL_int=np.array([HKL_int[m,:,ind[m]] for m in range(HKL_int.shape[0])])
+    Delta_k=np.array([Delta_k[m,:,ind[m]] for m in range(Delta_k.shape[0])])
+
+
+
+    #K_in_pred,K_out_pred=CCB_pred.kout_pred(OR,[0,0,1/wave_len],HKL_int)
+    K_in_pred,K_out_pred=CCB_pat_sim.kout_pred(OR,k_cen[frame,:],HKL_int)
+    valid_value=(K_in_pred[:,0]<15e8)*(K_in_pred[:,0]>-15e8)*(K_in_pred[:,1]<15e8)*(K_in_pred[:,1]>-15e8)
+    K_in_pred=K_in_pred[valid_value,:]
+    K_out_pred=K_out_pred[valid_value,:]
+    K_out=K_out[valid_value,:]
+    #print(K_out_pred.shape)
+    ###############CHECK THE CODES
+    #Delta_k_in_new=K_in_pred-np.array([0,0,1/wave_len]).reshape(1,3)
+    Delta_k_in_new=K_in_pred-k_cen[frame,:].reshape(1,3)
+    Delta_k_out_new=K_out_pred-K_out
+
+    ind_filter_1=np.linalg.norm(Delta_k_out_new,axis=1)<10e8
+    ind_filter_2=np.linalg.norm(Delta_k_in_new,axis=1)<10e8
+    ind_filter=ind_filter_1*ind_filter_2
+    Delta_k_in_new=Delta_k_in_new[ind_filter,:]
+    Delta_k_out_new=Delta_k_out_new[ind_filter,:]
+    K_out=K_out[ind_filter,:]
+    K_out_pred=K_out_pred[ind_filter,:]
+
+    TG=(np.linalg.norm(Delta_k_out_new,axis=1)**2).sum()
+    num_q=Delta_k_out_new.shape[0]
+    TG_norm=np.sqrt(TG/num_q)
+    return TG_norm, TG, num_q
+
+def _TG_func8(x,frame_list,res_file):
+    TG_total = 0
+    num_q_total = 0
+    for frame in frame_list:
+        _,TG,num_q = TG_func7(x,frame,res_file)
+        TG_total = TG_total + TG
+        num_q_total = num_q_total + num_q
+    
+    TG_norm = np.sqrt(TG_total/num_q_total)
+    #print('num_q_total:',num_q_total)
+    
     return TG_norm

@@ -48,7 +48,7 @@ def single_peak_finder(exp_img_file,frame_no,thld=10,min_pix=15,mask_file='None'
 		sys.exit('the mask file option is inproper.')
 
 	bimg=bimg*mask
-	all_labels=measure.label(bimg,connectivity=1) #connectivity is important here, for sim data,use 2, for exp data use 1
+	all_labels=measure.label(bimg,connectivity=2) #connectivity is important here, for sim data,use 2, for exp data use 1
 	props=measure.regionprops(all_labels,img_arry)
 
 	area=np.array([r.area for r in props]).reshape(-1,)

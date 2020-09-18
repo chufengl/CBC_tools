@@ -14,7 +14,7 @@ import time
 import CCB_int_proc
 
 save_list = [0,1,2,3,4,5,6,7,8,9,10,20,50,100,150,200]
-show_list = [0,1,2,3,4,5,6,7,8,9,10,50]
+show_list = [0,1,2,3,4,5,6,7,8,9,10,20,50]
 
 def Bootstrap(K_map_file,ite_no):
 	#save_list = [0,1,2,3,4,5,6,7,8,9,10,20,50,100,150,200]
@@ -194,3 +194,31 @@ if __name__=='__main__':
 	Bootstrap(K_map_file,ite_no)
 	hkl = [int(sys.argv[3]),int(sys.argv[4]),int(sys.argv[5])]
 	Invest_ite('Boot*.pkl',hkl)
+	with open('./Bootstrap_20.pkl','rb') as f:
+		d_exp = pk.load(f)
+	#import CCB_int_proc
+	plt.ion()
+	for frame in range(101): 
+		d_exp.show_frame_norm(frame)
+		plt.xlim(-10e8,2e8)
+		plt.ylim(-10e8,2e8)
+		plt.gca().set_aspect('equal',adjustable='box')
+		plt.draw()
+		plt.savefig('./frame_norm_fr%03d.png'%(frame))  
+		plt.close() 
+	norm_all=np.zeros_like(d_exp.frame_obj_list[0].INT_n_mean); 
+	for f in d_exp.frame_obj_list: 
+		norm_all=norm_all+f.INT_n_mean 
+	KX,KY=np.meshgrid(f.bins_arry_x,f.bins_arry_y);
+	plt.figure(figsize=(4,4));
+	plt.pcolor(KX,KY,norm_all);
+	plt.colorbar();
+	plt.title('frame norm 101');
+	plt.xlim(-10e8,2e8)
+	plt.ylim(-10e8,2e8)
+	plt.gca().set_aspect('equal',adjustable='box')
+	plt.draw()
+	#plt.show()
+	plt.savefig('./frame_norm_fr101.png')   
+
+	

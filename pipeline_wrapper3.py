@@ -27,7 +27,7 @@ print('K_map txt files Done!')
 
 os.system('rm -f K_map_sim_fr101.txt')
 os.system('rm -f K_map_fr101.txt')
-os.system('cat K_map_sim_fr*.txt > K_map_sim_fr101.txt')
+#os.system('cat K_map_sim_fr*.txt > K_map_sim_fr101.txt')
 os.system('cat K_map_fr*.txt > K_map_fr101.txt')
 
 #print('Generating Dataset object....\n counting time...')
@@ -54,7 +54,7 @@ print('Merging done, took %f seconds'%(dt.total_seconds()))
 
 print('Start Bootstrapping!')
 st = datetime.datetime.now()
-os.system('python ../Bootstrapping.py ./K_map_fr101.txt 10 -6 -4 1')
+os.system('python ../Bootstrapping.py ./K_map_fr101.txt 20 -6 -4 1')
 et = datetime.datetime.now()
 dt = et - st
 print('Bootstrapping done, took %f minutes'%(dt.total_seconds()/60))

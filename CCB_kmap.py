@@ -131,14 +131,16 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 	K_in_arry = np.array([K_in_arry[m,:,ind[m]] for m in range(K_in_arry.shape[0])])
 	pupil_valid = np.array([CCB_pat_sim.pupil_func(k_in) for k_in in K_in_arry])
 	
-	K_pix_arry_all=np.array([]).reshape(-1,13)
+	K_pix_arry_all=np.array([]).reshape(-1,15)
 	for ind, s_ind in np.ndenumerate(streak_ind):
 		ind=ind[0]
 		#if not pupil_valid[ind]:
 		#	print('outlier')
 		#	continue
 		num_pix=props[s_ind].coords.shape[0]
-		K_pix_arry=np.zeros((num_pix,13))	
+		maj_len = props[s_ind].major_axis_length
+		mino_len = props[s_ind].minor_axis_length
+		K_pix_arry=np.zeros((num_pix,15))	
 		K_pix_arry[:,0]=int(frame)
 		K_pix_arry[:,1]=props[s_ind].coords[:,1] # x coordinate of the pixel
 		K_pix_arry[:,2]=props[s_ind].coords[:,0] # y coordinate of the pixel
@@ -154,7 +156,9 @@ def get_K_frame(exp_img_file,frame,res_file='/home/lichufen/CCB_ind/Best_GA_res.
 		Q=OR@(HKL_int[ind,:].reshape(3,1))
 		#print(Q)
 		K_pix_arry[:,10:13]=K_pix_arry[:,7:10]-Q.reshape(1,3)
-	######	col0:frame, col1~3: x,y,I, col4~6:HKL, col7~9:kout, col10~12:k_in
+		K_pix_arry[:,13] = maj_len
+		K_pix_arry[:,14] = mino_len
+	######	col0:frame, col1~3: x,y,I, col4~6:HKL, col7~9:kout, col10~12:k_in, col13:major_axis_length
 		kin_val = np.array([CCB_pat_sim.pupil_func(k_in) for k_in in K_pix_arry[:,10:13]])
 		if (kin_val.sum()/kin_val.shape[0])<0.8:
 			print('outlier',K_pix_arry[0,4:7])
@@ -178,7 +182,7 @@ def K_output_frame(K_pix_arry_all):
 	#frame=int(K_pix_arry_all[0,0])
 	
 	#f.open('K_map_fr%d.txt'%(frame),'w')
-	np.savetxt('K_map_fr%d.txt'%(frame),K_pix_arry_all,fmt=['%3d','%7.1f','%7.1f','%7.1f','%3d','%3d','%3d','%13.3e','%13.3e','%13.3e','%13.3e','%13.3e','%13.3e'])
+	np.savetxt('K_map_fr%d.txt'%(frame),K_pix_arry_all,fmt=['%3d','%7.1f','%7.1f','%7.1f','%3d','%3d','%3d','%13.3e','%13.3e','%13.3e','%13.3e','%13.3e','%13.3e','%7.1f','%7.1f'])
 	return None
 
 if __name__=='__main__':

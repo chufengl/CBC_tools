@@ -121,6 +121,7 @@ def pupil_func(k_in):
     k_in_y=k_in_y - (-0e8)
     #valid_value=(k_in_x<8e8)*(k_in_x>-8e8)*(k_in_y<8e8)*(k_in_y>-8e8)
     #valid_value=(k_in_x<0e8)*(k_in_x>-5e8)*(k_in_y<0e8)*(k_in_y>-5e8)
+    #valid_value=(k_in_x<-2e8)*(k_in_x>-6e8)*(k_in_y<-0e8)*(k_in_y>-7e8)
     valid_value=(k_in_x<-2e8)*(k_in_x>-6e8)*(k_in_y<-0.5e8)*(k_in_y>-7e8)
     return valid_value
 
