@@ -157,9 +157,9 @@ def source_line_scan(k_in_cen,OR,HKL,rot_ang_step=0.05,rot_ang_range=3.0):
 def gen_HKL_list(res_cut,OR):
     ## res_cut: resolution cutoff in Angstrom
     ## lp: lattice parameters
-    H=np.arange(-25,25,1)
-    K=np.arange(-25,25,1)
-    L=np.arange(-25,25,1)
+    H=np.arange(-32,32,1)
+    K=np.arange(-32,32,1)
+    L=np.arange(-32,32,1)
     HH,KK,LL=np.meshgrid(H,K,L)
     HH=HH.reshape(-1)
     KK=KK.reshape(-1)
