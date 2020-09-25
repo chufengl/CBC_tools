@@ -24,7 +24,7 @@ PYTHON=~/anaconda3/bin/python
 start_frame=$1
 end_frame=$2
 
-round=10
+round=2
 
 mkdir fr${start_frame}_${end_frame}
 cd fr${start_frame}_${end_frame}

@@ -14,7 +14,7 @@ import CCB_read
 import h5py
 import re
 import matplotlib
-#matplotlib.use('pdf')
+matplotlib.use('pdf')
 import matplotlib.pyplot as plt
 
 OR_mat=np.array([[ 4.47536571e+08,-1.33238725e+08,0.00000000e+00],\
